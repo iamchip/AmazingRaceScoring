@@ -628,51 +628,6 @@ export default function App() {
     finally { setSyncing(false); }
   }
 
-  function scoreEpisode(pid, ep) {
-    const player = players.find(p=>p.id===pid);
-    let pts=0; const breakdown=[];
-    const isBlind = tid=>player.blind_team===tid;
-    const mult = tid=>isBlind(tid)?2:1;
-    const myTeams=[player.picked_team,player.blind_team].filter(Boolean);
-    myTeams.forEach(tid=>{
-      if(!ep.eliminated.includes(tid)){
-        const p=mult(tid)===2?2:1; pts+=p;
-        breakdown.push(`Survived ${getTeam(tid)?.nickname}: +${p}`);
-      }
-    });
-    [1,2,3].forEach(place=>{
-      const tid=ep[`place${place}`]; if(!tid||!myTeams.includes(tid)) return;
-      const earned=PLACE_POINTS[place]*mult(tid); pts+=earned;
-      breakdown.push(`${place}${place===1?"st":place===2?"nd":"rd"} ${getTeam(tid)?.nickname}: +${earned}`);
-    });
-    setSyncing(true);
-    try {
-      await db.addEvent(pid, "episode", ep.episode, pts, breakdown);
-      await loadActive();
-    } catch(e) { alert("Error saving episode: " + e.message); }
-    finally { setSyncing(false); }
-  }
-
-  async function applyBuyback(pid, both) {
-    const pts=both?-20:-10;
-    setSyncing(true);
-    try {
-      await db.addEvent(pid, "buyback", null, pts, [`Buyback: ${pts}pts`]);
-      await loadActive();
-    } catch(e) { alert("Error saving buyback: " + e.message); }
-    finally { setSyncing(false); }
-  }
-
-  async function applyPenalty(pid, mins) {
-    const pts=Math.max(-4,-Math.floor(mins/15));
-    setSyncing(true);
-    try {
-      await db.addEvent(pid, "penalty", null, pts, [`Penalty ${mins}min: ${pts}pts`]);
-      await loadActive();
-    } catch(e) { alert("Error saving penalty: " + e.message); }
-    finally { setSyncing(false); }
-  }
-
   // Load saved seasons from Supabase
   async function loadSavedSeasons() {
     setDbLoading(true);
