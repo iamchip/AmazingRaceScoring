@@ -552,7 +552,10 @@ export default function App() {
     try {
       await db.insertPlayer(name);
       await loadActive();
-    } catch(e) { alert("Error adding player: " + e.message); }
+    } catch(e) {
+      const msg = e.message || JSON.stringify(e);
+      alert("Error adding player: " + msg);
+    }
     finally { setSyncing(false); }
   }
 
@@ -575,12 +578,14 @@ export default function App() {
   }
 
   async function selectSeason(n) {
-    setSyncing(true);
+    // Set locally immediately so UI responds
+    setSelSeason(n);
     try {
       await db.setActiveSeason(n, SEASONS[n].name);
-      setSelSeason(n);
-    } catch(e) { alert("Error setting season: " + e.message); }
-    finally { setSyncing(false); }
+    } catch(e) {
+      console.error("Error setting season in DB:", e);
+      // Don't alert — local state is set, DB will sync next time
+    }
   }
 
   async function scoreEpisode(pid, ep) {
