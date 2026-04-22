@@ -328,8 +328,9 @@ const db = {
 
   // Saved seasons
   getSeasons: () => sb("saved_seasons?order=saved_at.desc&select=*,season_results(*)"),
-  saveSeason: (data) => sb("saved_seasons", {
+saveSeason: (data) => sb("saved_seasons", {
     method: "POST",
+    prefer: "return=representation",
     body: JSON.stringify(data),
   }),
   updateSeason: (id, data) => sb(`saved_seasons?id=eq.${id}`, {
@@ -339,8 +340,9 @@ const db = {
   deleteSeason: (id) => sb(`saved_seasons?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" }),
 
   // Season results
-  saveResults: (results) => sb("season_results", {
+ saveResults: (results) => sb("season_results", {
     method: "POST",
+    prefer: "return=representation",
     body: JSON.stringify(results),
   }),
   deleteResults: (seasonId) => sb(`season_results?saved_season_id=eq.${seasonId}`, {
