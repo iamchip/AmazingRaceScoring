@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 const SEASONS = {
   1: { name: "Season 1", year: 2001, finaleCity: "New York City", teams: [
     { id: 1, nickname: "Rob & Brennan" }, { id: 2, nickname: "Frank & Margarita" },
@@ -295,59 +295,83 @@ const PLACE_POINTS = { 1: 5, 2: 3, 3: 1 };
 
 // ─── SUPABASE CLIENT ────────────────────────────────────────────────────────
 // Replace these two values with your own from the Supabase dashboard
-const SUPABASE_URL = "https://qglbkzljfuwwkejbklwa.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_PkYpMPErA9KRkcS6t_lB7Q_s6OqhXld";
+const SUPABASE_URL = "YOUR_SUPABASE_URL";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 
-async function sb(path, options = {}) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    headers: {
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-      "Content-Type": "application/json",
-      "Prefer": options.prefer || "return=representation",
-    },
-    ...options,
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err);
-  }
+async function sb(path, method = "GET", body = null, extraHeaders = {}) {
+  const headers = {
+    "apikey": SUPABASE_ANON_KEY,
+    "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+    "Content-Type": "application/json",
+    ...extraHeaders,
+  };
+  const opts = { method, headers };
+  if (body !== null) opts.body = JSON.stringify(body);
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, opts);
   const text = await res.text();
+  if (!res.ok) throw new Error(text);
   return text ? JSON.parse(text) : null;
 }
 
 const db = {
-  // Players
-  getPlayers: () => sb("players?order=name"),
-  upsertPlayer: (name) => sb("players", {
-    method: "POST",
-    prefer: "resolution=merge-duplicates,return=representation",
-    body: JSON.stringify({ name }),
-  }),
-  deletePlayer: (id) => sb(`players?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" }),
+  // ── Active season (shared live state) ──
+  getActiveSeason: () => sb("active_season?id=eq.1", "GET"),
+  setActiveSeason: (season_number, season_name) => sb(
+    "active_season?id=eq.1", "PATCH",
+    { season_number, season_name, updated_at: new Date().toISOString() },
+    { "Prefer": "return=minimal" }
+  ),
 
-  // Saved seasons
-  getSeasons: () => sb("saved_seasons?order=saved_at.desc&select=*,season_results(*)"),
-saveSeason: (data) => sb("saved_seasons", {
-    method: "POST",
-    prefer: "return=representation",
-    body: JSON.stringify(data),
-  }),
-  updateSeason: (id, data) => sb(`saved_seasons?id=eq.${id}`, {
-    method: "PATCH",
-    body: JSON.stringify(data),
-  }),
-  deleteSeason: (id) => sb(`saved_seasons?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" }),
+  // ── Active players ──
+  getActivePlayers: () => sb(
+    "active_players?order=created_at&select=*,active_events(*)",
+    "GET"
+  ),
+  upsertPlayer: (name, blind_team, picked_team, city_guess) => sb(
+    "active_players", "POST",
+    { name, blind_team: blind_team||null, picked_team: picked_team||null, city_guess: city_guess||null },
+    { "Prefer": "resolution=merge-duplicates,return=representation" }
+  ),
+  updatePlayer: (id, fields) => sb(
+    `active_players?id=eq.${id}`, "PATCH", fields,
+    { "Prefer": "return=minimal" }
+  ),
+  deletePlayer: (id) => sb(
+    `active_players?id=eq.${id}`, "DELETE", null,
+    { "Prefer": "return=minimal" }
+  ),
+  clearPlayers: () => sb(
+    "active_players", "DELETE", null,
+    { "Prefer": "return=minimal" }
+  ),
 
-  // Season results
- saveResults: (results) => sb("season_results", {
-    method: "POST",
-    prefer: "return=representation",
-    body: JSON.stringify(results),
-  }),
-  deleteResults: (seasonId) => sb(`season_results?saved_season_id=eq.${seasonId}`, {
-    method: "DELETE", prefer: "return=minimal",
-  }),
+  // ── Active events ──
+  addEvent: (player_id, type, episode, points, breakdown) => sb(
+    "active_events", "POST",
+    { player_id, type, episode: episode||null, points, breakdown },
+    { "Prefer": "return=minimal" }
+  ),
+
+  // ── Saved seasons (all-time leaderboard) ──
+  getSeasons: () => sb(
+    "saved_seasons?order=saved_at.desc&select=*,season_results(*)", "GET"
+  ),
+  saveSeason: (data) => sb(
+    "saved_seasons", "POST", data,
+    { "Prefer": "return=representation" }
+  ),
+  deleteSeason: (id) => sb(
+    `saved_seasons?id=eq.${id}`, "DELETE", null,
+    { "Prefer": "return=minimal" }
+  ),
+  saveResults: (results) => sb(
+    "season_results", "POST", results,
+    { "Prefer": "return=minimal" }
+  ),
+  deleteResults: (seasonId) => sb(
+    `season_results?saved_season_id=eq.${seasonId}`, "DELETE", null,
+    { "Prefer": "return=minimal" }
+  ),
 };
 
 // ─── SHARED COMPONENTS ──────────────────────────────────────────────────────
@@ -403,11 +427,11 @@ const css = {
 
 // ─── EPISODE MODAL ──────────────────────────────────────────────────────────
 function EpisodeModal({ player, teams, onSave, onClose }) {
-  const nextEp = player.events.filter(e=>e.type==="episode").length + 1;
+  const nextEp = (player.active_events||[]).filter(e=>e.type==="episode").length + 1;
   const [ep, setEp] = useState(nextEp);
   const [p1, setP1] = useState(""); const [p2, setP2] = useState(""); const [p3, setP3] = useState("");
   const [elim, setElim] = useState([]);
-  const myTeams = [player.pickedTeam, player.blindTeam].filter(Boolean);
+  const myTeams = [player.picked_team, player.blind_team].filter(Boolean);
   const getTeam = tid => teams.find(t=>t.id===tid);
   const toggleElim = tid => setElim(e=>e.includes(tid)?e.filter(t=>t!==tid):[...e,tid]);
   return (
@@ -462,13 +486,15 @@ function PenaltyModal({ onSave, onClose }) {
 export default function App() {
   const [screen, setScreen] = useState("home");
   const [selSeason, setSelSeason] = useState(null);
-
-  // In-season state (not persisted to DB until "Save Season")
-  const [players, setPlayers] = useState([]);   // [{id, name, blindTeam, pickedTeam, events, cityGuess}]
   const [newName, setNewName] = useState("");
   const [modal, setModal] = useState(null);
   const [tab, setTab] = useState("scores");
   const [search, setSearch] = useState("");
+
+  // Live shared state from Supabase
+  const [players, setPlayers] = useState([]);   // includes nested active_events
+  const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   // All-time DB state
   const [savedSeasons, setSavedSeasons] = useState([]);
@@ -476,34 +502,85 @@ export default function App() {
   const [dbError, setDbError] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  // Edit state for all-time screen
-  const [editingSeason, setEditingSeason] = useState(null); // season id being edited
-
   const season = SEASONS[selSeason];
   const teams = season?.teams || [];
-  const calcScore = p => p.events.reduce((s,e)=>s+e.points,0);
+
+  // Compute score from nested events
+  const calcScore = p => (p.active_events||[]).reduce((s,e)=>s+e.points, 0);
   const sorted = [...players].sort((a,b)=>calcScore(b)-calcScore(a));
   const seasonNums = Object.keys(SEASONS).map(Number).reverse();
   const filteredSeasons = search
     ? seasonNums.filter(n=>SEASONS[n].name.toLowerCase().includes(search.toLowerCase())||String(SEASONS[n].year).includes(search))
     : seasonNums;
   const modalPlayer = modal ? players.find(p=>p.id===modal.playerId) : null;
-
-  function updatePlayer(id, fn) { setPlayers(p=>p.map(pl=>pl.id===id?fn(pl):pl)); }
   function getTeam(tid) { return teams.find(t=>t.id===tid); }
 
-  function addPlayer() {
-    if (!newName.trim()) return;
-    setPlayers(p=>[...p,{id:Date.now(),name:newName.trim(),pickedTeam:null,blindTeam:null,events:[],cityGuess:""}]);
-    setNewName("");
+  // Load active state from Supabase
+  async function loadActive() {
+    setLoading(true);
+    try {
+      const [seasonRows, playerRows] = await Promise.all([
+        db.getActiveSeason(),
+        db.getActivePlayers(),
+      ]);
+      const activeSeason = seasonRows?.[0];
+      if (activeSeason?.season_number) setSelSeason(activeSeason.season_number);
+      setPlayers(playerRows || []);
+    } catch(e) {
+      console.error("Load failed", e);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function scoreEpisode(pid, ep) {
+  // Load on mount
+  useEffect(() => { loadActive(); }, []);
+
+  async function addPlayer() {
+    if (!newName.trim()) return;
+    const name = newName.trim();
+    setNewName("");
+    setSyncing(true);
+    try {
+      const result = await db.upsertPlayer(name, null, null, null);
+      await loadActive();
+    } catch(e) { alert("Error adding player: " + e.message); }
+    finally { setSyncing(false); }
+  }
+
+  async function updatePlayerField(id, fields) {
+    setSyncing(true);
+    try {
+      await db.updatePlayer(id, fields);
+      setPlayers(p=>p.map(pl=>pl.id===id?{...pl,...fields}:pl));
+    } catch(e) { alert("Error updating: " + e.message); }
+    finally { setSyncing(false); }
+  }
+
+  async function removePlayer(id) {
+    setSyncing(true);
+    try {
+      await db.deletePlayer(id);
+      setPlayers(p=>p.filter(pl=>pl.id!==id));
+    } catch(e) { alert("Error removing player: " + e.message); }
+    finally { setSyncing(false); }
+  }
+
+  async function selectSeason(n) {
+    setSyncing(true);
+    try {
+      await db.setActiveSeason(n, SEASONS[n].name);
+      setSelSeason(n);
+    } catch(e) { alert("Error setting season: " + e.message); }
+    finally { setSyncing(false); }
+  }
+
+  async function scoreEpisode(pid, ep) {
     const player = players.find(p=>p.id===pid);
     let pts=0; const breakdown=[];
-    const isBlind = tid=>player.blindTeam===tid;
+    const isBlind = tid=>player.blind_team===tid;
     const mult = tid=>isBlind(tid)?2:1;
-    const myTeams=[player.pickedTeam,player.blindTeam].filter(Boolean);
+    const myTeams=[player.picked_team,player.blind_team].filter(Boolean);
     myTeams.forEach(tid=>{
       if(!ep.eliminated.includes(tid)){
         const p=mult(tid)===2?2:1; pts+=p;
@@ -515,17 +592,77 @@ export default function App() {
       const earned=PLACE_POINTS[place]*mult(tid); pts+=earned;
       breakdown.push(`${place}${place===1?"st":place===2?"nd":"rd"} ${getTeam(tid)?.nickname}: +${earned}`);
     });
-    updatePlayer(pid,pl=>({...pl,events:[...pl.events,{type:"episode",episode:ep.episode,points:pts,breakdown}]}));
+    setSyncing(true);
+    try {
+      await db.addEvent(pid, "episode", ep.episode, pts, breakdown);
+      await loadActive();
+    } catch(e) { alert("Error saving episode: " + e.message); }
+    finally { setSyncing(false); }
   }
 
-  function applyBuyback(pid, both) {
+  async function applyBuyback(pid, both) {
+    const pts = both?-20:-10;
+    setSyncing(true);
+    try {
+      await db.addEvent(pid, "buyback", null, pts, [`Buyback: ${pts}pts`]);
+      await loadActive();
+    } catch(e) { alert("Error saving buyback: " + e.message); }
+    finally { setSyncing(false); }
+  }
+
+  async function applyPenalty(pid, mins) {
+    const pts = Math.max(-4,-Math.floor(mins/15));
+    setSyncing(true);
+    try {
+      await db.addEvent(pid, "penalty", null, pts, [`Penalty ${mins}min: ${pts}pts`]);
+      await loadActive();
+    } catch(e) { alert("Error saving penalty: " + e.message); }
+    finally { setSyncing(false); }
+  }
+
+  function scoreEpisode(pid, ep) {
+    const player = players.find(p=>p.id===pid);
+    let pts=0; const breakdown=[];
+    const isBlind = tid=>player.blind_team===tid;
+    const mult = tid=>isBlind(tid)?2:1;
+    const myTeams=[player.picked_team,player.blind_team].filter(Boolean);
+    myTeams.forEach(tid=>{
+      if(!ep.eliminated.includes(tid)){
+        const p=mult(tid)===2?2:1; pts+=p;
+        breakdown.push(`Survived ${getTeam(tid)?.nickname}: +${p}`);
+      }
+    });
+    [1,2,3].forEach(place=>{
+      const tid=ep[`place${place}`]; if(!tid||!myTeams.includes(tid)) return;
+      const earned=PLACE_POINTS[place]*mult(tid); pts+=earned;
+      breakdown.push(`${place}${place===1?"st":place===2?"nd":"rd"} ${getTeam(tid)?.nickname}: +${earned}`);
+    });
+    setSyncing(true);
+    try {
+      await db.addEvent(pid, "episode", ep.episode, pts, breakdown);
+      await loadActive();
+    } catch(e) { alert("Error saving episode: " + e.message); }
+    finally { setSyncing(false); }
+  }
+
+  async function applyBuyback(pid, both) {
     const pts=both?-20:-10;
-    updatePlayer(pid,pl=>({...pl,events:[...pl.events,{type:"buyback",points:pts,breakdown:[`Buyback: ${pts}pts`]}]}));
+    setSyncing(true);
+    try {
+      await db.addEvent(pid, "buyback", null, pts, [`Buyback: ${pts}pts`]);
+      await loadActive();
+    } catch(e) { alert("Error saving buyback: " + e.message); }
+    finally { setSyncing(false); }
   }
 
-  function applyPenalty(pid, mins) {
+  async function applyPenalty(pid, mins) {
     const pts=Math.max(-4,-Math.floor(mins/15));
-    updatePlayer(pid,pl=>({...pl,events:[...pl.events,{type:"penalty",points:pts,breakdown:[`Penalty ${mins}min: ${pts}pts`]}]}));
+    setSyncing(true);
+    try {
+      await db.addEvent(pid, "penalty", null, pts, [`Penalty ${mins}min: ${pts}pts`]);
+      await loadActive();
+    } catch(e) { alert("Error saving penalty: " + e.message); }
+    finally { setSyncing(false); }
   }
 
   // Load saved seasons from Supabase
@@ -542,7 +679,7 @@ export default function App() {
     }
   }
 
-  // Save current season to Supabase
+  // Save current season to all-time leaderboard
   async function saveSeason() {
     if (players.length === 0) return;
     setSaving(true);
@@ -551,9 +688,9 @@ export default function App() {
         player_name: pl.name,
         score: calcScore(pl),
         finish_position: i+1,
-        blind_team: getTeam(pl.blindTeam)?.nickname||null,
-        picked_team: getTeam(pl.pickedTeam)?.nickname||null,
-        city_guess: pl.cityGuess||null,
+        blind_team: getTeam(pl.blind_team)?.nickname||null,
+        picked_team: getTeam(pl.picked_team)?.nickname||null,
+        city_guess: pl.city_guess||null,
       }));
       const inserted = await db.saveSeason({
         season_number: selSeason,
@@ -562,13 +699,27 @@ export default function App() {
         saved_at: new Date().toISOString(),
       });
       const savedSeason = Array.isArray(inserted) ? inserted[0] : inserted;
-      if (!savedSeason?.id) throw new Error("No ID returned from saved_seasons insert");
+      if (!savedSeason?.id) throw new Error("Insert succeeded but no ID returned. Check Supabase RLS policies.");
       await db.saveResults(results.map(r=>({...r, saved_season_id: savedSeason.id})));
       alert(`${season.name} saved to All-Time Leaderboard!`);
     } catch(e) {
-      alert("Save failed: " + e.message);
+      alert("Save failed: " + (e.message || JSON.stringify(e)));
     } finally {
       setSaving(false);
+    }
+  }
+
+  // Load saved seasons from Supabase
+  async function loadSavedSeasons() {
+    setDbLoading(true);
+    setDbError(null);
+    try {
+      const data = await db.getSeasons();
+      setSavedSeasons(data || []);
+    } catch(e) {
+      setDbError("Could not connect to database. Check your Supabase credentials.");
+    } finally {
+      setDbLoading(false);
     }
   }
 
@@ -582,6 +733,19 @@ export default function App() {
     } catch(e) {
       alert("Delete failed: " + e.message);
     }
+  }
+
+  // Clear active season (start fresh)
+  async function clearSeason() {
+    if (!confirm("Clear all players and scores? This cannot be undone.")) return;
+    setSyncing(true);
+    try {
+      await db.clearPlayers();
+      await db.setActiveSeason(null, null);
+      setPlayers([]);
+      setSelSeason(null);
+    } catch(e) { alert("Error clearing: " + e.message); }
+    finally { setSyncing(false); }
   }
 
   // Compute all-time stats from savedSeasons
@@ -610,7 +774,7 @@ export default function App() {
         <div style={{marginBottom:16}}>
           <div style={{fontSize:12,color:"#f1c40f",letterSpacing:3,textTransform:"uppercase",fontWeight:600}}>🏁 Amazing Race</div>
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:48,color:"#fff",lineHeight:1,letterSpacing:2}}>PREDICTION<br/>LEAGUE</div>
-          <div style={{color:"#64748b",fontSize:13,marginTop:6}}>All 36 seasons · full team rosters</div>
+          <div style={{color:"#64748b",fontSize:13,marginTop:6}}>All 36 seasons · full team rosters {loading && "· loading…"}</div>
           <div style={{display:"flex",gap:8,marginTop:14}}>
             <button onClick={()=>setScreen("rules")} style={{...css.btn("g"),flex:1,padding:"9px 12px",fontSize:13}}>📖 Rules</button>
             <button onClick={()=>{setScreen("alltime");loadSavedSeasons();}} style={{...css.btn("g"),flex:1,padding:"9px 12px",fontSize:13}}>🏆 All-Time</button>
@@ -622,10 +786,14 @@ export default function App() {
             style={{...css.inp,marginBottom:10,fontSize:13}}/>
           <div style={{overflowY:"auto",flex:1}}>
             {filteredSeasons.map(n=>(
-              <button key={n} onClick={()=>{setSelSeason(n);setPlayers([]);setScreen("setup");}}
+              <button key={n} onClick={()=>{ selectSeason(n); setScreen("setup"); }}
                 style={{...css.btn("s"),marginBottom:7,display:"flex",alignItems:"center",justifyContent:"space-between",
-                  textAlign:"left",padding:"10px 14px",borderRadius:10}}>
-                <span style={{fontWeight:700}}>{SEASONS[n].name}</span>
+                  textAlign:"left",padding:"10px 14px",borderRadius:10,
+                  border: selSeason===n ? "1px solid #f1c40f55" : "1px solid transparent"}}>
+                <div>
+                  <span style={{fontWeight:700}}>{SEASONS[n].name}</span>
+                  {selSeason===n&&players.length>0&&<span style={{fontSize:10,color:"#f1c40f",marginLeft:8,fontWeight:600}}>● IN PROGRESS</span>}
+                </div>
                 <span style={{opacity:0.5,fontSize:12}}>{SEASONS[n].year} · {SEASONS[n].teams.length} teams</span>
               </button>
             ))}
@@ -670,6 +838,17 @@ export default function App() {
         <div><div style={css.ttl}>{season?.name}</div><div style={css.sub}>{teams.length} teams · player setup</div></div>
       </div>
       <div style={{padding:"16px 16px 100px"}}>
+        {players.length>0 && players.some(p=>(p.active_events||[]).length>0) && (
+          <div style={{...css.card,borderColor:"#f1c40f44",background:"#f1c40f11",marginBottom:12,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div>
+              <div style={{fontWeight:700,fontSize:14,color:"#f1c40f"}}>▶ Season in progress</div>
+              <div style={{fontSize:12,color:"#94a3b8",marginTop:2}}>
+                {Math.max(0,...players.map(p=>(p.active_events||[]).filter(e=>e.type==="episode").length))} episodes recorded · {players.length} players
+              </div>
+            </div>
+            <button onClick={()=>setScreen("scoring")} style={{...css.btn("p"),width:"auto",padding:"8px 14px",fontSize:13,borderRadius:9}}>Resume →</button>
+          </div>
+        )}
         <div style={css.card}>
           <div style={{fontSize:12,color:"#64748b",fontWeight:600,letterSpacing:1,marginBottom:10}}>ADD PLAYERS</div>
           <div style={{display:"flex",gap:8}}>
@@ -682,12 +861,12 @@ export default function App() {
           <div key={pl.id} style={css.card}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
               <div style={{fontWeight:700,fontSize:16}}>{pl.name}</div>
-              <button onClick={()=>setPlayers(p=>p.filter(x=>x.id!==pl.id))}
+              <button onClick={()=>removePlayer(pl.id)}
                 style={{background:"none",border:"none",color:"#ef4444",fontSize:18,cursor:"pointer"}}>✕</button>
             </div>
             <div style={{marginBottom:10}}>
               <div style={{fontSize:11,color:"#f1c40f",fontWeight:700,letterSpacing:1,marginBottom:5}}>🎲 BLIND PAIR <span style={{color:"#475569",fontWeight:400,textTransform:"none",fontSize:10}}>— before Phil says go</span></div>
-              <select value={pl.blindTeam||""} onChange={e=>updatePlayer(pl.id,p=>({...p,blindTeam:Number(e.target.value)||null}))}
+              <select value={pl.blind_team||""} onChange={e=>updatePlayerField(pl.id,{blind_team:Number(e.target.value)||null})
                 style={{...css.inp,fontSize:14}}>
                 <option value="">— Select team —</option>
                 {[...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname)).map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
@@ -695,7 +874,7 @@ export default function App() {
             </div>
             <div style={{marginBottom:10}}>
               <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:5}}>✋ PICKED PAIR <span style={{color:"#475569",fontWeight:400,textTransform:"none",fontSize:10}}>— before Ep 3</span></div>
-              <select value={pl.pickedTeam||""} onChange={e=>updatePlayer(pl.id,p=>({...p,pickedTeam:Number(e.target.value)||null}))}
+              <select value={pl.picked_team||""} onChange={e=>updatePlayerField(pl.id,{picked_team:Number(e.target.value)||null})
                 style={{...css.inp,fontSize:14}}>
                 <option value="">— Select team —</option>
                 {[...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname)).map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
@@ -703,14 +882,17 @@ export default function App() {
             </div>
             <div>
               <div style={{fontSize:11,color:"#64748b",fontWeight:700,letterSpacing:1,marginBottom:5}}>🌍 FINALE CITY GUESS</div>
-              <input placeholder="e.g. Dallas" value={pl.cityGuess}
-                onChange={e=>updatePlayer(pl.id,p=>({...p,cityGuess:e.target.value}))}
+              <input placeholder="e.g. Dallas" value={pl.city_guess}
+                onChange={e=>updatePlayerField(pl.id,{city_guess:e.target.value})}
                 style={{...css.inp,fontSize:14}}/>
             </div>
           </div>
         ))}
         {players.length>=1&&(
           <button onClick={()=>setScreen("scoring")} style={{...css.btn("p"),marginTop:4}}>🏁 Start Scoring →</button>
+        )}
+        {players.length>=1&&(
+          <button onClick={clearSeason} style={{...css.btn("g"),marginTop:8,fontSize:13}}>🗑 Clear Season & Start Over</button>
         )}
         <div style={{...css.card,background:"transparent",border:"1px solid #1e2a3a",marginTop:4,padding:"10px 14px"}}>
           <div style={{fontSize:12,color:"#64748b",lineHeight:1.5}}>
@@ -728,6 +910,8 @@ export default function App() {
       <div style={css.hdr}>
         <button onClick={()=>setScreen("setup")} style={{background:"none",border:"none",color:"#f1c40f",fontSize:22,cursor:"pointer"}}>←</button>
         <div style={{flex:1}}><div style={css.ttl}>{season?.name}</div></div>
+        {syncing && <div style={{fontSize:12,color:"#64748b"}}>syncing…</div>}
+        <button onClick={loadActive} style={{background:"none",border:"none",color:"#64748b",fontSize:18,cursor:"pointer",marginLeft:4}}>↻</button>
         <button onClick={()=>setScreen("rules")} style={{background:"none",border:"none",color:"#64748b",fontSize:18,cursor:"pointer"}}>📖</button>
       </div>
       <div style={{padding:"14px 14px 80px"}}>
@@ -751,14 +935,14 @@ export default function App() {
                 <div style={{flex:1}}>
                   <div style={{fontWeight:700,fontSize:16}}>{pl.name}</div>
                   <div style={{fontSize:11,color:"#64748b"}}>
-                    🎲 {getTeam(pl.blindTeam)?.nickname||"None"} · ✋ {getTeam(pl.pickedTeam)?.nickname||"None"}
+                    🎲 {getTeam(pl.blind_team)?.nickname||"None"} · ✋ {getTeam(pl.picked_team)?.nickname||"None"}
                   </div>
                 </div>
                 <ScoreBadge points={score}/>
               </div>
-              {pl.events.length>0&&(
+              {( pl.active_events||[]).length>0&&(
                 <div style={{borderTop:"1px solid #1e2a3a",paddingTop:8,marginBottom:10}}>
-                  {pl.events.map((ev,j)=>(
+                  {(pl.active_events||[]).map((ev,j)=>(
                     <div key={j} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
                       <div style={{fontSize:12,color:"#64748b"}}>{ev.type==="episode"?`Ep ${ev.episode}`:ev.type==="buyback"?"Buyback":"Penalty"}</div>
                       <ScoreBadge points={ev.points} small/>
@@ -782,7 +966,7 @@ export default function App() {
               <div style={{fontSize:11,color:"#f1c40f",fontWeight:700,letterSpacing:1,marginBottom:5}}>
                 🎲 BLIND PAIR <span style={{color:"#475569",fontWeight:400,textTransform:"none",fontSize:10}}>— before Phil says go</span>
               </div>
-              <select value={pl.blindTeam||""} onChange={e=>updatePlayer(pl.id,p=>({...p,blindTeam:Number(e.target.value)||null}))}
+              <select value={pl.blind_team||""} onChange={e=>updatePlayerField(pl.id,{blind_team:Number(e.target.value)||null})
                 style={{...css.inp,fontSize:14}}>
                 <option value="">— Select team —</option>
                 {[...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname)).map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
@@ -792,7 +976,7 @@ export default function App() {
               <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:5}}>
                 ✋ PICKED PAIR <span style={{color:"#475569",fontWeight:400,textTransform:"none",fontSize:10}}>— before Ep 3</span>
               </div>
-              <select value={pl.pickedTeam||""} onChange={e=>updatePlayer(pl.id,p=>({...p,pickedTeam:Number(e.target.value)||null}))}
+              <select value={pl.picked_team||""} onChange={e=>updatePlayerField(pl.id,{picked_team:Number(e.target.value)||null})
                 style={{...css.inp,fontSize:14}}>
                 <option value="">— Not yet picked —</option>
                 {[...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname)).map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
@@ -800,8 +984,8 @@ export default function App() {
             </div>
             <div>
               <div style={{fontSize:11,color:"#64748b",fontWeight:700,letterSpacing:1,marginBottom:5}}>🌍 FINALE CITY GUESS</div>
-              <input placeholder="e.g. Dallas" value={pl.cityGuess}
-                onChange={e=>updatePlayer(pl.id,p=>({...p,cityGuess:e.target.value}))}
+              <input placeholder="e.g. Dallas" value={pl.city_guess}
+                onChange={e=>updatePlayerField(pl.id,{city_guess:e.target.value})}
                 style={{...css.inp,fontSize:14}}/>
             </div>
           </div>
@@ -841,8 +1025,8 @@ export default function App() {
                   <div style={{fontSize:11,color:"#f1c40f",fontWeight:700,letterSpacing:1,marginBottom:6}}>
                     🎲 UPDATE BLIND PAIR
                   </div>
-                  <select value={modalPlayer.blindTeam||""}
-                    onChange={e=>updatePlayer(modal.playerId,p=>({...p,blindTeam:Number(e.target.value)||null}))}
+                  <select value={modalPlayer.blind_team||""}
+                    onChange={e=>updatePlayerField(modal.playerId,{blind_team:Number(e.target.value)||null})}
                     style={{...css.inp,fontSize:14}}>
                     <option value="">— No blind team —</option>
                     {sortedTeams.map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
@@ -852,8 +1036,8 @@ export default function App() {
                   <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:6}}>
                     ✋ UPDATE PICKED PAIR
                   </div>
-                  <select value={modalPlayer.pickedTeam||""}
-                    onChange={e=>updatePlayer(modal.playerId,p=>({...p,pickedTeam:Number(e.target.value)||null}))}
+                  <select value={modalPlayer.picked_team||""}
+                    onChange={e=>updatePlayerField(modal.playerId,{picked_team:Number(e.target.value)||null})}
                     style={{...css.inp,fontSize:14}}>
                     <option value="">— No picked team —</option>
                     {sortedTeams.map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
