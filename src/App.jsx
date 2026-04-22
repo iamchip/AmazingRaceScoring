@@ -829,7 +829,7 @@ export default function App() {
             </div>
             <div style={{marginBottom:10}}>
               <div style={{fontSize:11,color:"#f1c40f",fontWeight:700,letterSpacing:1,marginBottom:5}}>🎲 BLIND PAIR <span style={{color:"#475569",fontWeight:400,textTransform:"none",fontSize:10}}>— before Phil says go</span></div>
-              <select value={pl.blind_team||""} onChange={e=>updatePlayerField(pl.id,{blind_team:Number(e.target.value)||null})
+              <select value={pl.blind_team||""} onChange={e=>updatePlayerField(pl.id,{blind_team:Number(e.target.value)||null})}
                 style={{...css.inp,fontSize:14}}>
                 <option value="">— Select team —</option>
                 {[...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname)).map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
@@ -837,7 +837,7 @@ export default function App() {
             </div>
             <div style={{marginBottom:10}}>
               <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:5}}>✋ PICKED PAIR <span style={{color:"#475569",fontWeight:400,textTransform:"none",fontSize:10}}>— before Ep 3</span></div>
-              <select value={pl.picked_team||""} onChange={e=>updatePlayerField(pl.id,{picked_team:Number(e.target.value)||null})
+              <select value={pl.picked_team||""} onChange={e=>updatePlayerField(pl.id,{picked_team:Number(e.target.value)||null})}
                 style={{...css.inp,fontSize:14}}>
                 <option value="">— Select team —</option>
                 {[...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname)).map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
@@ -929,7 +929,7 @@ export default function App() {
               <div style={{fontSize:11,color:"#f1c40f",fontWeight:700,letterSpacing:1,marginBottom:5}}>
                 🎲 BLIND PAIR <span style={{color:"#475569",fontWeight:400,textTransform:"none",fontSize:10}}>— before Phil says go</span>
               </div>
-              <select value={pl.blind_team||""} onChange={e=>updatePlayerField(pl.id,{blind_team:Number(e.target.value)||null})
+              <select value={pl.blind_team||""} onChange={e=>updatePlayerField(pl.id,{blind_team:Number(e.target.value)||null})}
                 style={{...css.inp,fontSize:14}}>
                 <option value="">— Select team —</option>
                 {[...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname)).map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
@@ -939,7 +939,7 @@ export default function App() {
               <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:5}}>
                 ✋ PICKED PAIR <span style={{color:"#475569",fontWeight:400,textTransform:"none",fontSize:10}}>— before Ep 3</span>
               </div>
-              <select value={pl.picked_team||""} onChange={e=>updatePlayerField(pl.id,{picked_team:Number(e.target.value)||null})
+              <select value={pl.picked_team||""} onChange={e=>updatePlayerField(pl.id,{picked_team:Number(e.target.value)||null})}
                 style={{...css.inp,fontSize:14}}>
                 <option value="">— Not yet picked —</option>
                 {[...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname)).map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
