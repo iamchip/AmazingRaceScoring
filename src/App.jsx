@@ -295,8 +295,8 @@ const PLACE_POINTS = { 1: 5, 2: 3, 3: 1 };
 
 // ─── SUPABASE CLIENT ────────────────────────────────────────────────────────
 // Replace these two values with your own from the Supabase dashboard
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://qglbkzljfuwwkejbklwa.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnbGJremxqZnV3d2tlamJrbHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzY1NjIsImV4cCI6MjA5MjQ1MjU2Mn0.JDkR6a4mzXpJheujwwit6-E4HDctepwSZoZsF09Y2WU";
 
 async function sb(path, method = "GET", body = null, extraHeaders = {}) {
   const headers = {
@@ -307,9 +307,14 @@ async function sb(path, method = "GET", body = null, extraHeaders = {}) {
   };
   const opts = { method, headers };
   if (body !== null) opts.body = JSON.stringify(body);
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, opts);
+  let res;
+  try {
+    res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, opts);
+  } catch(networkErr) {
+    throw new Error("Network error — check your Supabase URL is correct and has no trailing slash. " + networkErr);
+  }
   const text = await res.text();
-  if (!res.ok) throw new Error(text);
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${text}`);
   return text ? JSON.parse(text) : null;
 }
 
