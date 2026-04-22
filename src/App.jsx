@@ -324,13 +324,13 @@ const db = {
 
   // ── Active players ──
   getActivePlayers: () => sb(
-    "active_players?order=created_at&select=*,active_events(*)",
+    "active_players?order=created_at&select=*,active_events(id,event_type,episode,points,breakdown,created_at)",
     "GET"
   ),
-  upsertPlayer: (name, blind_team, picked_team, city_guess) => sb(
+  insertPlayer: (name) => sb(
     "active_players", "POST",
-    { name, blind_team: blind_team||null, picked_team: picked_team||null, city_guess: city_guess||null },
-    { "Prefer": "resolution=merge-duplicates,return=representation" }
+    { name, blind_team: null, picked_team: null, city_guess: null },
+    { "Prefer": "return=representation" }
   ),
   updatePlayer: (id, fields) => sb(
     `active_players?id=eq.${id}`, "PATCH", fields,
@@ -348,7 +348,7 @@ const db = {
   // ── Active events ──
   addEvent: (player_id, type, episode, points, breakdown) => sb(
     "active_events", "POST",
-    { player_id, type, episode: episode||null, points, breakdown },
+    { player_id, event_type: type, episode: episode||null, points, breakdown },
     { "Prefer": "return=minimal" }
   ),
 
@@ -427,7 +427,7 @@ const css = {
 
 // ─── EPISODE MODAL ──────────────────────────────────────────────────────────
 function EpisodeModal({ player, teams, onSave, onClose }) {
-  const nextEp = (player.active_events||[]).filter(e=>e.type==="episode").length + 1;
+  const nextEp = (player.active_events||[]).filter(e=>e.event_type==="episode").length + 1;
   const [ep, setEp] = useState(nextEp);
   const [p1, setP1] = useState(""); const [p2, setP2] = useState(""); const [p3, setP3] = useState("");
   const [elim, setElim] = useState([]);
@@ -525,7 +525,11 @@ export default function App() {
       ]);
       const activeSeason = seasonRows?.[0];
       if (activeSeason?.season_number) setSelSeason(activeSeason.season_number);
-      setPlayers(playerRows || []);
+      const sorted = (playerRows || []).map(p=>({
+        ...p,
+        active_events: (p.active_events||[]).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)),
+      }));
+      setPlayers(sorted);
     } catch(e) {
       console.error("Load failed", e);
     } finally {
@@ -539,10 +543,14 @@ export default function App() {
   async function addPlayer() {
     if (!newName.trim()) return;
     const name = newName.trim();
+    if (players.find(p=>p.name.toLowerCase()===name.toLowerCase())) {
+      alert(`${name} is already in the list.`);
+      return;
+    }
     setNewName("");
     setSyncing(true);
     try {
-      const result = await db.upsertPlayer(name, null, null, null);
+      await db.insertPlayer(name);
       await loadActive();
     } catch(e) { alert("Error adding player: " + e.message); }
     finally { setSyncing(false); }
@@ -843,7 +851,7 @@ export default function App() {
             <div>
               <div style={{fontWeight:700,fontSize:14,color:"#f1c40f"}}>▶ Season in progress</div>
               <div style={{fontSize:12,color:"#94a3b8",marginTop:2}}>
-                {Math.max(0,...players.map(p=>(p.active_events||[]).filter(e=>e.type==="episode").length))} episodes recorded · {players.length} players
+                {Math.max(0,...players.map(p=>(p.active_events||[]).filter(e=>e.event_type==="episode").length))} episodes recorded · {players.length} players
               </div>
             </div>
             <button onClick={()=>setScreen("scoring")} style={{...css.btn("p"),width:"auto",padding:"8px 14px",fontSize:13,borderRadius:9}}>Resume →</button>
@@ -944,7 +952,7 @@ export default function App() {
                 <div style={{borderTop:"1px solid #1e2a3a",paddingTop:8,marginBottom:10}}>
                   {(pl.active_events||[]).map((ev,j)=>(
                     <div key={j} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                      <div style={{fontSize:12,color:"#64748b"}}>{ev.type==="episode"?`Ep ${ev.episode}`:ev.type==="buyback"?"Buyback":"Penalty"}</div>
+                      <div style={{fontSize:12,color:"#64748b"}}>{ev.event_type==="episode"?`Ep ${ev.episode}`:ev.event_type==="buyback"?"Buyback":"Penalty"}</div>
                       <ScoreBadge points={ev.points} small/>
                     </div>
                   ))}
