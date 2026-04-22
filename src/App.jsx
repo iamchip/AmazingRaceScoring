@@ -357,6 +357,14 @@ const db = {
     { player_id, event_type: type, episode: episode||null, points, breakdown },
     { "Prefer": "return=minimal" }
   ),
+  deleteEvent: (id) => sb(
+    `active_events?id=eq.${id}`, "DELETE", null,
+    { "Prefer": "return=minimal" }
+  ),
+  deleteEpisodeForAll: (episodeNum) => sb(
+    `active_events?event_type=eq.episode&episode=eq.${episodeNum}`, "DELETE", null,
+    { "Prefer": "return=minimal" }
+  ),
 
   // ── Saved seasons (all-time leaderboard) ──
   getSeasons: () => sb(
@@ -438,17 +446,36 @@ function AllEpisodeModal({ players, teams, onSave, onClose }) {
   const [first, setFirst] = useState("");
   const [second, setSecond] = useState("");
   const [third, setThird] = useState("");
-  // eliminated: { [playerId]: [teamId, ...] }
-  const [eliminated, setEliminated] = useState({});
+  const [eliminatedTeams, setEliminatedTeams] = useState([]); // shared list of team ids eliminated this ep
 
   const getTeam = tid => teams.find(t=>t.id===tid);
   const allTeams = [...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname));
 
-  const toggleElim = (playerId, teamId) => {
-    setEliminated(prev => {
-      const cur = prev[playerId] || [];
-      return { ...prev, [playerId]: cur.includes(teamId) ? cur.filter(t=>t!==teamId) : [...cur, teamId] };
+  // All teams that any player has picked (to show in elimination section)
+  const pickedTeamIds = [...new Set(players.flatMap(p=>[p.picked_team, p.blind_team].filter(Boolean)))];
+  const pickedTeams = allTeams.filter(t=>pickedTeamIds.includes(t.id));
+
+  // Teams still racing (not eliminated) for place dropdowns
+  const stillRacing = allTeams.filter(t=>!eliminatedTeams.includes(t.id));
+
+  const toggleElimTeam = (tid) => {
+    setEliminatedTeams(prev => prev.includes(tid) ? prev.filter(t=>t!==tid) : [...prev, tid]);
+    // Clear place selections if that team gets eliminated
+    if (!eliminatedTeams.includes(tid)) {
+      if (first===tid) setFirst("");
+      if (second===tid) setSecond("");
+      if (third===tid) setThird("");
+    }
+  };
+
+  // Build the per-player eliminated map from the shared list
+  const buildEliminatedMap = () => {
+    const map = {};
+    players.forEach(pl => {
+      const myElim = [pl.picked_team, pl.blind_team].filter(t=>t&&eliminatedTeams.includes(t));
+      if (myElim.length > 0) map[pl.id] = myElim;
     });
+    return map;
   };
 
   return (
@@ -456,40 +483,51 @@ function AllEpisodeModal({ players, teams, onSave, onClose }) {
       <div style={{fontSize:11,color:"#64748b",fontWeight:700,letterSpacing:1,marginBottom:5}}>EPISODE #</div>
       <input type="number" value={ep} onChange={e=>setEp(Number(e.target.value))} style={{...css.inp,marginBottom:14}}/>
 
+      <div style={{fontSize:11,color:"#ef4444",fontWeight:700,letterSpacing:1,marginBottom:8}}>💀 ELIMINATED THIS EPISODE</div>
+      <div style={{marginBottom:14}}>
+        <div style={{fontSize:11,color:"#64748b",marginBottom:8}}>Select any teams eliminated this leg:</div>
+        {allTeams.map(t=>{
+          const isElim = eliminatedTeams.includes(t.id);
+          const playersWithTeam = players.filter(p=>p.blind_team===t.id||p.picked_team===t.id);
+          return (
+            <div key={t.id} onClick={()=>toggleElimTeam(t.id)} style={{
+              background:isElim?"#ef444422":"#0f1420",
+              border:`1px solid ${isElim?"#ef4444":"#1e2a3a"}`,
+              borderRadius:10,padding:"10px 14px",marginBottom:6,cursor:"pointer",
+              display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div>
+                <div style={{fontSize:14,fontWeight:isElim?700:400,color:isElim?"#f87171":"#e2e8f0"}}>{t.nickname}</div>
+                {playersWithTeam.length>0&&(
+                  <div style={{fontSize:11,color:"#475569",marginTop:2}}>
+                    {playersWithTeam.map(p=>`${p.name} (${p.blind_team===t.id?"blind":"picked"})`).join(" · ")}
+                  </div>
+                )}
+              </div>
+              <span style={{fontSize:18,marginLeft:8,color:isElim?"#ef4444":"#334155"}}>{isElim?"✓":"○"}</span>
+            </div>
+          );
+        })}
+        <div onClick={()=>setEliminatedTeams([])} style={{
+          background:"transparent",border:"1px solid #1e2a3a",borderRadius:10,
+          padding:"8px 14px",cursor:"pointer",textAlign:"center",color:"#64748b",fontSize:13,marginTop:4}}>
+          ○ No elimination this episode
+        </div>
+      </div>
+
       <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8}}>🏁 LEG RESULTS</div>
-      {[["🥇 1ST PLACE (+5)",first,setFirst],["🥈 2ND PLACE (+3)",second,setSecond],["🥉 3RD PLACE (+1)",third,setThird]].map(([label,val,set])=>(
+      {[["🥇 1ST PLACE (+5)","#f1c40f",first,setFirst],["🥈 2ND PLACE (+3)","#94a3b8",second,setSecond],["🥉 3RD PLACE (+1)","#b45309",third,setThird]].map(([label,color,val,set])=>(
         <div key={label} style={{marginBottom:10}}>
-          <div style={{fontSize:11,color:label.includes("1ST")?"#f1c40f":label.includes("2ND")?"#94a3b8":"#b45309",fontWeight:700,letterSpacing:1,marginBottom:5}}>{label}</div>
+          <div style={{fontSize:11,color,fontWeight:700,letterSpacing:1,marginBottom:5}}>{label}</div>
           <select value={val} onChange={e=>set(Number(e.target.value)||"")} style={{...css.inp,fontSize:14}}>
-            <option value="">— No one placed —</option>
-            {allTeams.map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
+            <option value="">— No player's team —</option>
+            {stillRacing.filter(t=>pickedTeamIds.includes(t.id)).map(t=>(
+              <option key={t.id} value={t.id}>{t.nickname}</option>
+            ))}
           </select>
         </div>
       ))}
 
-      <div style={{fontSize:11,color:"#ef4444",fontWeight:700,letterSpacing:1,marginBottom:8,marginTop:4}}>💀 ELIMINATIONS</div>
-      {players.map(pl=>{
-        const myTeams = [pl.picked_team, pl.blind_team].filter(Boolean);
-        if (myTeams.length === 0) return null;
-        const elimForPlayer = eliminated[pl.id] || [];
-        return (
-          <div key={pl.id} style={{...css.card,marginBottom:8,padding:"10px 12px"}}>
-            <div style={{fontSize:12,color:"#94a3b8",fontWeight:700,marginBottom:8}}>{pl.name}</div>
-            {myTeams.map(tid=>(
-              <div key={tid} onClick={()=>toggleElim(pl.id, tid)} style={{
-                background:elimForPlayer.includes(tid)?"#ef444422":"#0f1420",
-                border:`1px solid ${elimForPlayer.includes(tid)?"#ef4444":"#334155"}`,
-                borderRadius:8,padding:"8px 12px",marginBottom:6,cursor:"pointer",
-                display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <span style={{fontSize:13}}>{getTeam(tid)?.nickname} <span style={{color:"#475569",fontSize:11}}>{tid===pl.blind_team?"(blind)":"(picked)"}</span></span>
-                <span style={{fontSize:16}}>{elimForPlayer.includes(tid)?"✓":"○"}</span>
-              </div>
-            ))}
-          </div>
-        );
-      })}
-
-      <button onClick={()=>onSave({episode:ep, place1:first, place2:second, place3:third, eliminated})}
+      <button onClick={()=>onSave({episode:ep, place1:first, place2:second, place3:third, eliminated:buildEliminatedMap()})}
         style={{...css.btn("p"),marginTop:8}}>✓ Save Episode for All Players</button>
     </Sheet>
   );
@@ -619,7 +657,26 @@ export default function App() {
     }
   }
 
-  async function scoreEpisode(ep) {
+  const [editEpisodeNum, setEditEpisodeNum] = useState(null); // episode number being re-scored
+
+  async function deleteEvent(eventId) {
+    setSyncing(true);
+    try {
+      await db.deleteEvent(eventId);
+      await loadActive();
+    } catch(e) { alert("Error deleting: " + (e.message||JSON.stringify(e))); }
+    finally { setSyncing(false); }
+  }
+
+  async function deleteEpisodeForAll(epNum) {
+    if (!confirm(`Delete Episode ${epNum} scores for all players? You can re-enter it after.`)) return;
+    setSyncing(true);
+    try {
+      await db.deleteEpisodeForAll(epNum);
+      await loadActive();
+    } catch(e) { alert("Error deleting episode: " + (e.message||JSON.stringify(e))); }
+    finally { setSyncing(false); }
+  }
     // ep = { episode, place1, place2, place3, eliminated: { [playerId]: [teamId,...] } }
     setSyncing(true);
     try {
@@ -930,10 +987,29 @@ export default function App() {
         </div>
         {tab==="scores" && (
           <button onClick={()=>setModal({type:"episode"})}
-            style={{...css.btn("p"),marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            style={{...css.btn("p"),marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
             📺 Score Episode {Math.max(0,...players.map(p=>(p.active_events||[]).filter(e=>e.event_type==="episode").length))+1}
           </button>
         )}
+        {tab==="scores" && (()=>{
+          const epNums = [...new Set(players.flatMap(p=>(p.active_events||[]).filter(e=>e.event_type==="episode").map(e=>e.episode)))].sort((a,b)=>a-b);
+          if (epNums.length===0) return null;
+          return (
+            <div style={{...css.card,marginBottom:14,padding:"10px 14px"}}>
+              <div style={{fontSize:11,color:"#64748b",fontWeight:600,letterSpacing:1,marginBottom:8}}>SCORED EPISODES</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                {epNums.map(n=>(
+                  <div key={n} style={{display:"flex",alignItems:"center",gap:4,background:"#0f1420",borderRadius:8,padding:"4px 10px"}}>
+                    <span style={{fontSize:13,color:"#94a3b8",fontWeight:600}}>Ep {n}</span>
+                    <button onClick={()=>deleteEpisodeForAll(n)}
+                      style={{background:"none",border:"none",color:"#ef4444",fontSize:13,cursor:"pointer",padding:"0 2px",lineHeight:1}}>✕</button>
+                  </div>
+                ))}
+              </div>
+              <div style={{fontSize:11,color:"#475569",marginTop:8}}>Tap ✕ to delete an episode and re-enter it</div>
+            </div>
+          );
+        })()}
 
         {tab==="scores" && sorted.map((pl,i)=>{
           const score=calcScore(pl);
@@ -951,10 +1027,26 @@ export default function App() {
               </div>
               {( pl.active_events||[]).length>0&&(
                 <div style={{borderTop:"1px solid #1e2a3a",paddingTop:8,marginBottom:10}}>
-                  {(pl.active_events||[]).map((ev,j)=>(
-                    <div key={j} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                      <div style={{fontSize:12,color:"#64748b"}}>{ev.event_type==="episode"?`Ep ${ev.episode}`:ev.event_type==="buyback"?"Buyback":"Penalty"}</div>
-                      <ScoreBadge points={ev.points} small/>
+                  {[...(pl.active_events||[])]
+                    .sort((a,b)=>{
+                      // Episodes first by number, then buybacks/penalties by created_at
+                      if (a.event_type==="episode" && b.event_type==="episode") return a.episode-b.episode;
+                      if (a.event_type==="episode") return -1;
+                      if (b.event_type==="episode") return 1;
+                      return new Date(a.created_at)-new Date(b.created_at);
+                    })
+                    .map((ev)=>(
+                    <div key={ev.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                      <div style={{fontSize:12,color:"#64748b"}}>
+                        {ev.event_type==="episode"?`Ep ${ev.episode}`:ev.event_type==="buyback"?"Buyback":"Penalty"}
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <ScoreBadge points={ev.points} small/>
+                        {ev.event_type!=="episode"&&(
+                          <button onClick={()=>deleteEvent(ev.id)}
+                            style={{background:"none",border:"none",color:"#475569",fontSize:14,cursor:"pointer",padding:"0 2px"}}>✕</button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
