@@ -346,7 +346,8 @@ const db = {
     { "Prefer": "return=minimal" }
   ),
   clearPlayers: () => sb(
-    "active_players", "DELETE", null,
+    "active_players?id=neq.00000000-0000-0000-0000-000000000000",
+    "DELETE", null,
     { "Prefer": "return=minimal" }
   ),
 
