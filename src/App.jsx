@@ -963,6 +963,18 @@ export default function App() {
             </div>
           </div>
         ))}
+        {tab==="picks" && (
+          <div style={{...css.card,borderStyle:"dashed",borderColor:"#334155"}}>
+            <div style={{fontSize:12,color:"#64748b",fontWeight:600,letterSpacing:1,marginBottom:10}}>➕ ADD PLAYER MID-SEASON</div>
+            <div style={{display:"flex",gap:8}}>
+              <input placeholder="Player name..." value={newName} onChange={e=>setNewName(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&addPlayer()}
+                style={{...css.inp,flex:1,fontSize:14}}/>
+              <button onClick={addPlayer} disabled={syncing}
+                style={{...css.btn("p"),width:"auto",padding:"10px 16px",borderRadius:10,opacity:syncing?0.6:1}}>+</button>
+            </div>
+          </div>
+        )}
       </div>
 
       {modal?.type==="episode"&&modalPlayer&&(
