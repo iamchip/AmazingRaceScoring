@@ -431,41 +431,66 @@ const css = {
     fontWeight:a?700:500,fontSize:14,fontFamily:"'DM Sans',sans-serif"}),
 };
 
-// ─── EPISODE MODAL ──────────────────────────────────────────────────────────
-function EpisodeModal({ player, teams, onSave, onClose }) {
-  const nextEp = (player.active_events||[]).filter(e=>e.event_type==="episode").length + 1;
-  const [ep, setEp] = useState(nextEp);
-  const [p1, setP1] = useState(""); const [p2, setP2] = useState(""); const [p3, setP3] = useState("");
-  const [elim, setElim] = useState([]);
-  const myTeams = [player.picked_team, player.blind_team].filter(Boolean);
+// ─── ALL-PLAYERS EPISODE MODAL ──────────────────────────────────────────────
+function AllEpisodeModal({ players, teams, onSave, onClose }) {
+  const maxEp = Math.max(0, ...players.map(p=>(p.active_events||[]).filter(e=>e.event_type==="episode").length));
+  const [ep, setEp] = useState(maxEp + 1);
+  const [first, setFirst] = useState("");
+  const [second, setSecond] = useState("");
+  const [third, setThird] = useState("");
+  // eliminated: { [playerId]: [teamId, ...] }
+  const [eliminated, setEliminated] = useState({});
+
   const getTeam = tid => teams.find(t=>t.id===tid);
-  const toggleElim = tid => setElim(e=>e.includes(tid)?e.filter(t=>t!==tid):[...e,tid]);
+  const allTeams = [...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname));
+
+  const toggleElim = (playerId, teamId) => {
+    setEliminated(prev => {
+      const cur = prev[playerId] || [];
+      return { ...prev, [playerId]: cur.includes(teamId) ? cur.filter(t=>t!==teamId) : [...cur, teamId] };
+    });
+  };
+
   return (
-    <Sheet title={`EP ${ep} — ${player.name}`} onClose={onClose}>
+    <Sheet title={`SCORE EPISODE ${ep}`} onClose={onClose}>
       <div style={{fontSize:11,color:"#64748b",fontWeight:700,letterSpacing:1,marginBottom:5}}>EPISODE #</div>
       <input type="number" value={ep} onChange={e=>setEp(Number(e.target.value))} style={{...css.inp,marginBottom:14}}/>
-      {[["p1","🥇 1ST (+5)",p1,setP1],["p2","🥈 2ND (+3)",p2,setP2],["p3","🥉 3RD (+1)",p3,setP3]].map(([key,label,val,set])=>(
-        <div key={key} style={{marginBottom:12}}>
-          <div style={{fontSize:11,color:key==="p1"?"#f1c40f":key==="p2"?"#94a3b8":"#b45309",fontWeight:700,letterSpacing:1,marginBottom:5}}>{label}</div>
+
+      <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:8}}>🏁 LEG RESULTS</div>
+      {[["🥇 1ST PLACE (+5)",first,setFirst],["🥈 2ND PLACE (+3)",second,setSecond],["🥉 3RD PLACE (+1)",third,setThird]].map(([label,val,set])=>(
+        <div key={label} style={{marginBottom:10}}>
+          <div style={{fontSize:11,color:label.includes("1ST")?"#f1c40f":label.includes("2ND")?"#94a3b8":"#b45309",fontWeight:700,letterSpacing:1,marginBottom:5}}>{label}</div>
           <select value={val} onChange={e=>set(Number(e.target.value)||"")} style={{...css.inp,fontSize:14}}>
-            <option value="">— Not your team —</option>
-            {myTeams.map(tid=><option key={tid} value={tid}>{getTeam(tid)?.nickname}</option>)}
+            <option value="">— No one placed —</option>
+            {allTeams.map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
           </select>
         </div>
       ))}
-      <div style={{fontSize:11,color:"#ef4444",fontWeight:700,letterSpacing:1,marginBottom:8}}>💀 ELIMINATED THIS EPISODE</div>
-      {myTeams.map(tid=>(
-        <div key={tid} onClick={()=>toggleElim(tid)} style={{
-          background:elim.includes(tid)?"#ef444422":"#0f1420",
-          border:`1px solid ${elim.includes(tid)?"#ef4444":"#334155"}`,
-          borderRadius:10,padding:"10px 14px",marginBottom:8,cursor:"pointer",
-          display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          <span style={{fontSize:14}}>{getTeam(tid)?.nickname}</span>
-          <span style={{fontSize:18}}>{elim.includes(tid)?"✓":"○"}</span>
-        </div>
-      ))}
-      <button onClick={()=>onSave({episode:ep,place1:p1,place2:p2,place3:p3,eliminated:elim})}
-        style={{...css.btn("p"),marginTop:8}}>✓ Save Episode</button>
+
+      <div style={{fontSize:11,color:"#ef4444",fontWeight:700,letterSpacing:1,marginBottom:8,marginTop:4}}>💀 ELIMINATIONS</div>
+      {players.map(pl=>{
+        const myTeams = [pl.picked_team, pl.blind_team].filter(Boolean);
+        if (myTeams.length === 0) return null;
+        const elimForPlayer = eliminated[pl.id] || [];
+        return (
+          <div key={pl.id} style={{...css.card,marginBottom:8,padding:"10px 12px"}}>
+            <div style={{fontSize:12,color:"#94a3b8",fontWeight:700,marginBottom:8}}>{pl.name}</div>
+            {myTeams.map(tid=>(
+              <div key={tid} onClick={()=>toggleElim(pl.id, tid)} style={{
+                background:elimForPlayer.includes(tid)?"#ef444422":"#0f1420",
+                border:`1px solid ${elimForPlayer.includes(tid)?"#ef4444":"#334155"}`,
+                borderRadius:8,padding:"8px 12px",marginBottom:6,cursor:"pointer",
+                display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <span style={{fontSize:13}}>{getTeam(tid)?.nickname} <span style={{color:"#475569",fontSize:11}}>{tid===pl.blind_team?"(blind)":"(picked)"}</span></span>
+                <span style={{fontSize:16}}>{elimForPlayer.includes(tid)?"✓":"○"}</span>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+
+      <button onClick={()=>onSave({episode:ep, place1:first, place2:second, place3:third, eliminated})}
+        style={{...css.btn("p"),marginTop:8}}>✓ Save Episode for All Players</button>
     </Sheet>
   );
 }
@@ -594,28 +619,32 @@ export default function App() {
     }
   }
 
-  async function scoreEpisode(pid, ep) {
-    const player = players.find(p=>p.id===pid);
-    let pts=0; const breakdown=[];
-    const isBlind = tid=>player.blind_team===tid;
-    const mult = tid=>isBlind(tid)?2:1;
-    const myTeams=[player.picked_team,player.blind_team].filter(Boolean);
-    myTeams.forEach(tid=>{
-      if(!ep.eliminated.includes(tid)){
-        const p=mult(tid)===2?2:1; pts+=p;
-        breakdown.push(`Survived ${getTeam(tid)?.nickname}: +${p}`);
-      }
-    });
-    [1,2,3].forEach(place=>{
-      const tid=ep[`place${place}`]; if(!tid||!myTeams.includes(tid)) return;
-      const earned=PLACE_POINTS[place]*mult(tid); pts+=earned;
-      breakdown.push(`${place}${place===1?"st":place===2?"nd":"rd"} ${getTeam(tid)?.nickname}: +${earned}`);
-    });
+  async function scoreEpisode(ep) {
+    // ep = { episode, place1, place2, place3, eliminated: { [playerId]: [teamId,...] } }
     setSyncing(true);
     try {
-      await db.addEvent(pid, "episode", ep.episode, pts, breakdown);
+      await Promise.all(players.map(async pl => {
+        let pts = 0; const breakdown = [];
+        const isBlind = tid => pl.blind_team === tid;
+        const mult = tid => isBlind(tid) ? 2 : 1;
+        const myTeams = [pl.picked_team, pl.blind_team].filter(Boolean);
+        const elimForPlayer = ep.eliminated[pl.id] || [];
+
+        myTeams.forEach(tid => {
+          if (!elimForPlayer.includes(tid)) {
+            const p = mult(tid) === 2 ? 2 : 1; pts += p;
+            breakdown.push(`Survived ${getTeam(tid)?.nickname}: +${p}`);
+          }
+        });
+        [1,2,3].forEach(place => {
+          const tid = ep[`place${place}`]; if (!tid || !myTeams.includes(tid)) return;
+          const earned = PLACE_POINTS[place] * mult(tid); pts += earned;
+          breakdown.push(`${place}${place===1?"st":place===2?"nd":"rd"} ${getTeam(tid)?.nickname}: +${earned}`);
+        });
+        await db.addEvent(pl.id, "episode", ep.episode, pts, breakdown);
+      }));
       await loadActive();
-    } catch(e) { alert("Error saving episode: " + e.message); }
+    } catch(e) { alert("Error saving episode: " + (e.message||JSON.stringify(e))); }
     finally { setSyncing(false); }
   }
 
@@ -899,6 +928,12 @@ export default function App() {
             {saving?"Saving…":"💾 Save"}
           </button>
         </div>
+        {tab==="scores" && (
+          <button onClick={()=>setModal({type:"episode"})}
+            style={{...css.btn("p"),marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            📺 Score Episode {Math.max(0,...players.map(p=>(p.active_events||[]).filter(e=>e.event_type==="episode").length))+1}
+          </button>
+        )}
 
         {tab==="scores" && sorted.map((pl,i)=>{
           const score=calcScore(pl);
@@ -925,9 +960,8 @@ export default function App() {
                 </div>
               )}
               <div style={{display:"flex",gap:6}}>
-                <button onClick={()=>setModal({type:"episode",playerId:pl.id})} style={{...css.btn("s"),flex:1,padding:"7px",fontSize:12,borderRadius:9}}>+Ep</button>
-                <button onClick={()=>setModal({type:"penalty",playerId:pl.id})} style={{...css.btn("s"),flex:1,padding:"7px",fontSize:12,borderRadius:9}}>⏱Pen</button>
-                <button onClick={()=>setModal({type:"buyback",playerId:pl.id})} style={{...css.btn("d"),flex:1,padding:"7px",fontSize:12,borderRadius:9}}>💀Buy</button>
+                <button onClick={()=>setModal({type:"penalty",playerId:pl.id})} style={{...css.btn("s"),flex:1,padding:"7px",fontSize:12,borderRadius:9}}>⏱ Penalty</button>
+                <button onClick={()=>setModal({type:"buyback",playerId:pl.id})} style={{...css.btn("d"),flex:1,padding:"7px",fontSize:12,borderRadius:9}}>💀 Buyback</button>
               </div>
             </div>
           );
@@ -978,9 +1012,9 @@ export default function App() {
         )}
       </div>
 
-      {modal?.type==="episode"&&modalPlayer&&(
-        <EpisodeModal player={modalPlayer} teams={teams}
-          onSave={ep=>{scoreEpisode(modal.playerId,ep);setModal(null);}}
+      {modal?.type==="episode"&&(
+        <AllEpisodeModal players={players} teams={teams}
+          onSave={ep=>{scoreEpisode(ep);setModal(null);}}
           onClose={()=>setModal(null)}/>
       )}
       {modal?.type==="penalty"&&modalPlayer&&(
