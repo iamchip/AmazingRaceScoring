@@ -295,7 +295,7 @@ const PLACE_POINTS = { 1: 5, 2: 3, 3: 1 };
 
 // ─── SUPABASE CLIENT ────────────────────────────────────────────────────────
 // Replace these two values with your own from the Supabase dashboard
-const SUPABASE_URL = "https://qglbkzljfuwwkejbklwa.supabase.co/rest/v1/";
+const SUPABASE_URL = "https://qglbkzljfuwwkejbklwa.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_PkYpMPErA9KRkcS6t_lB7Q_s6OqhXld";
 
 async function sb(path, options = {}) {
