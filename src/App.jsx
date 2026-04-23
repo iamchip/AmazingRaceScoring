@@ -629,7 +629,7 @@ export default function App() {
   }
 
   // Load on mount
-  useEffect(() => { loadActive(); }, []);
+  useEffect(() => { loadActive(); loadSavedSeasons(); }, []);
 
   async function addPlayer() {
     if (!newName.trim()) return;
@@ -767,6 +767,45 @@ export default function App() {
     }
   }
 
+  // End season: save to all-time leaderboard then clear active state
+  async function endSeason() {
+    if (players.length === 0) return;
+    if (!confirm(`End ${season?.name}? This will save final scores to the All-Time Leaderboard and clear the active season for everyone.`)) return;
+    setSaving(true);
+    try {
+      const results = sorted.map((pl,i)=>({
+        player_name: pl.name,
+        score: calcScore(pl),
+        finish_position: i+1,
+        blind_team: getTeam(pl.blind_team)?.nickname||null,
+        picked_team: getTeam(pl.picked_team)?.nickname||null,
+        city_guess: pl.city_guess||null,
+      }));
+      const inserted = await db.saveSeason({
+        season_number: selSeason,
+        season_name: season.name,
+        season_year: season.year,
+        saved_at: new Date().toISOString(),
+      });
+      const savedSeason = Array.isArray(inserted) ? inserted[0] : inserted;
+      if (!savedSeason?.id) throw new Error("Insert succeeded but no ID returned. Check Supabase RLS policies.");
+      await db.saveResults(results.map(r=>({...r, saved_season_id: savedSeason.id})));
+      // Clear active season for everyone
+      await db.clearPlayers();
+      await db.setActiveSeason(null, null);
+      setPlayers([]);
+      setSelSeason(null);
+      setPreviouslyEliminatedTeamIds([]);
+      await loadSavedSeasons();
+      setScreen("home");
+      alert(`${season?.name} complete! Final scores saved to All-Time Leaderboard.`);
+    } catch(e) {
+      alert("End season failed: " + (e.message || JSON.stringify(e)));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   // Save current season to all-time leaderboard
   async function saveSeason() {
     if (players.length === 0) return;
@@ -874,18 +913,23 @@ export default function App() {
           <input placeholder="Search seasons..." value={search} onChange={e=>setSearch(e.target.value)}
             style={{...css.inp,marginBottom:10,fontSize:13}}/>
           <div style={{overflowY:"auto",flex:1}}>
-            {filteredSeasons.map(n=>(
-              <button key={n} onClick={()=>{ selectSeason(n); setScreen("setup"); }}
-                style={{...css.btn("s"),marginBottom:7,display:"flex",alignItems:"center",justifyContent:"space-between",
-                  textAlign:"left",padding:"10px 14px",borderRadius:10,
-                  border: selSeason===n ? "1px solid #f1c40f55" : "1px solid transparent"}}>
-                <div>
-                  <span style={{fontWeight:700}}>{SEASONS[n].name}</span>
-                  {selSeason===n&&players.length>0&&<span style={{fontSize:10,color:"#f1c40f",marginLeft:8,fontWeight:600}}>● IN PROGRESS</span>}
-                </div>
-                <span style={{opacity:0.5,fontSize:12}}>{SEASONS[n].year} · {SEASONS[n].teams.length} teams</span>
-              </button>
-            ))}
+            {filteredSeasons.map(n=>{
+              const isCompleted = savedSeasons.some(s=>s.season_number===n);
+              const isInProgress = selSeason===n && players.length>0;
+              return (
+                <button key={n} onClick={()=>{ selectSeason(n); setScreen("setup"); }}
+                  style={{...css.btn("s"),marginBottom:7,display:"flex",alignItems:"center",justifyContent:"space-between",
+                    textAlign:"left",padding:"10px 14px",borderRadius:10,
+                    border: isInProgress ? "1px solid #f1c40f55" : isCompleted ? "1px solid #4ade8044" : "1px solid transparent"}}>
+                  <div>
+                    <span style={{fontWeight:700}}>{SEASONS[n].name}</span>
+                    {isInProgress && <span style={{fontSize:10,color:"#f1c40f",marginLeft:8,fontWeight:600}}>● IN PROGRESS</span>}
+                    {isCompleted && !isInProgress && <span style={{fontSize:10,color:"#4ade80",marginLeft:8,fontWeight:600}}>✓ COMPLETED</span>}
+                  </div>
+                  <span style={{opacity:0.5,fontSize:12}}>{SEASONS[n].year} · {SEASONS[n].teams.length} teams</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -1091,7 +1135,18 @@ export default function App() {
           );
         })}
 
-        {tab==="picks" && players.map(pl=>(
+        {tab==="scores" && players.length>0 && (
+          <div style={{...css.card,borderColor:"#f1c40f44",marginTop:8,padding:"14px 16px"}}>
+            <div style={{fontWeight:700,fontSize:14,color:"#f1c40f",marginBottom:4}}>🏁 Season Complete?</div>
+            <div style={{fontSize:12,color:"#64748b",marginBottom:12,lineHeight:1.5}}>
+              This saves final scores to the All-Time Leaderboard and clears the active season for everyone.
+            </div>
+            <button onClick={endSeason} disabled={saving}
+              style={{...css.btn("p"),opacity:saving?0.6:1}}>
+              {saving?"Saving…":"🏆 End Season & Save to All-Time"}
+            </button>
+          </div>
+        )}
           <div key={pl.id} style={css.card}>
             <div style={{fontWeight:700,fontSize:16,marginBottom:12}}>{pl.name}</div>
             <div style={{marginBottom:10}}>
