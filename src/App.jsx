@@ -513,7 +513,7 @@ function AllEpisodeModal({ players, teams, previouslyEliminated = [], onSave, on
             </div>
           );
         })}
-        <div onClick={()=>setElimSet(new Set())} style={{
+        <div onClick={()=>setElimSet(new Set(previouslyEliminated.map(Number)))} style={{
           background:"transparent",border:"1px solid #1e2a3a",borderRadius:10,
           padding:"8px 14px",cursor:"pointer",textAlign:"center",color:"#64748b",fontSize:13,marginTop:4}}>
           ○ No elimination this episode
