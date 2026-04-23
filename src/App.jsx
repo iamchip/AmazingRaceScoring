@@ -557,6 +557,50 @@ function PenaltyModal({ onSave, onClose }) {
   );
 }
 
+// ─── BUYBACK MODAL ──────────────────────────────────────────────────────────
+function BuybackModal({ player, teams, onApply, onUpdateField, onClose }) {
+  const [step, setStep] = useState("how-many");
+  const sortedTeams = [...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname));
+  return (
+    <Sheet title="BUYBACK" onClose={onClose}>
+      {step==="how-many" && (
+        <>
+          <div style={{color:"#94a3b8",marginBottom:14,fontSize:14}}>How many of your teams were eliminated?</div>
+          <button onClick={()=>{onApply(false);setStep("swap");}}
+            style={{...css.btn("d"),marginBottom:10}}>One eliminated — −10pts</button>
+          <button onClick={()=>{onApply(true);setStep("swap");}}
+            style={css.btn("d")}>Both eliminated — −20pts</button>
+        </>
+      )}
+      {step==="swap" && (
+        <>
+          <div style={{...css.card,background:"#ef444411",borderColor:"#ef444433",marginBottom:14}}>
+            <div style={{fontSize:13,color:"#f87171",fontWeight:600,marginBottom:2}}>Penalty applied ✓</div>
+            <div style={{fontSize:12,color:"#94a3b8"}}>Buyback team counts as your picked pair — no double points.</div>
+          </div>
+          <div style={{marginBottom:12}}>
+            <div style={{fontSize:11,color:"#f1c40f",fontWeight:700,letterSpacing:1,marginBottom:6}}>🎲 UPDATE BLIND PAIR</div>
+            <select value={player.blind_team||""} onChange={e=>onUpdateField({blind_team:Number(e.target.value)||null})}
+              style={{...css.inp,fontSize:14}}>
+              <option value="">— No blind team —</option>
+              {sortedTeams.map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
+            </select>
+          </div>
+          <div style={{marginBottom:16}}>
+            <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:6}}>✋ UPDATE PICKED PAIR</div>
+            <select value={player.picked_team||""} onChange={e=>onUpdateField({picked_team:Number(e.target.value)||null})}
+              style={{...css.inp,fontSize:14}}>
+              <option value="">— No picked team —</option>
+              {sortedTeams.map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
+            </select>
+          </div>
+          <button onClick={onClose} style={css.btn("p")}>✓ Done</button>
+        </>
+      )}
+    </Sheet>
+  );
+}
+
 // ─── MAIN APP ───────────────────────────────────────────────────────────────
 export default function App() {
   const [screen, setScreen] = useState("home");
@@ -1200,55 +1244,14 @@ export default function App() {
       {modal?.type==="penalty"&&modalPlayer&&(
         <PenaltyModal onSave={m=>{applyPenalty(modal.playerId,m);setModal(null);}} onClose={()=>setModal(null)}/>
       )}
-      {modal?.type==="buyback"&&modalPlayer&&(()=>{
-        const [step, setStep] = useState("how-many"); // "how-many" | "swap"
-        const [bothElim, setBothElim] = useState(false);
-        const sortedTeams = [...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname));
-        return (
-          <Sheet title="BUYBACK" onClose={()=>setModal(null)}>
-            {step==="how-many"&&(
-              <>
-                <div style={{color:"#94a3b8",marginBottom:14,fontSize:14}}>How many of your teams were eliminated?</div>
-                <button onClick={()=>{applyBuyback(modal.playerId,false);setBothElim(false);setStep("swap");}}
-                  style={{...css.btn("d"),marginBottom:10}}>One eliminated — −10pts</button>
-                <button onClick={()=>{applyBuyback(modal.playerId,true);setBothElim(true);setStep("swap");}}
-                  style={css.btn("d")}>Both eliminated — −20pts</button>
-              </>
-            )}
-            {step==="swap"&&(
-              <>
-                <div style={{...css.card,background:"#ef444411",borderColor:"#ef444433",marginBottom:14}}>
-                  <div style={{fontSize:13,color:"#f87171",fontWeight:600,marginBottom:2}}>Penalty applied ✓</div>
-                  <div style={{fontSize:12,color:"#94a3b8"}}>Buyback team counts as your picked pair — no double points.</div>
-                </div>
-                <div style={{marginBottom:12}}>
-                  <div style={{fontSize:11,color:"#f1c40f",fontWeight:700,letterSpacing:1,marginBottom:6}}>
-                    🎲 UPDATE BLIND PAIR
-                  </div>
-                  <select value={modalPlayer.blind_team||""}
-                    onChange={e=>updatePlayerField(modal.playerId,{blind_team:Number(e.target.value)||null})}
-                    style={{...css.inp,fontSize:14}}>
-                    <option value="">— No blind team —</option>
-                    {sortedTeams.map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
-                  </select>
-                </div>
-                <div style={{marginBottom:16}}>
-                  <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:6}}>
-                    ✋ UPDATE PICKED PAIR
-                  </div>
-                  <select value={modalPlayer.picked_team||""}
-                    onChange={e=>updatePlayerField(modal.playerId,{picked_team:Number(e.target.value)||null})}
-                    style={{...css.inp,fontSize:14}}>
-                    <option value="">— No picked team —</option>
-                    {sortedTeams.map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
-                  </select>
-                </div>
-                <button onClick={()=>setModal(null)} style={css.btn("p")}>✓ Done</button>
-              </>
-            )}
-          </Sheet>
-        );
-      })()}
+      {modal?.type==="buyback"&&modalPlayer&&(
+        <BuybackModal
+          player={modalPlayer}
+          teams={teams}
+          onApply={(both)=>applyBuyback(modal.playerId,both)}
+          onUpdateField={(fields)=>updatePlayerField(modal.playerId,fields)}
+          onClose={()=>setModal(null)}/>
+      )}
     </div>
   );
 
