@@ -900,10 +900,9 @@ export default function App() {
       <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
       <div style={{background:"linear-gradient(160deg,#1a1f2e,#0f1420 55%)",minHeight:"100vh",display:"flex",flexDirection:"column",padding:"50px 22px 40px"}}>
         <div style={{marginBottom:16}}>
-          <div style={{fontSize:12,color:"#f1c40f",letterSpacing:3,textTransform:"uppercase",fontWeight:600}}>🏁 Amazing Race</div>
-          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:48,color:"#fff",lineHeight:1,letterSpacing:2}}>PREDICTION<br/>LEAGUE</div>
-          <div style={{color:"#64748b",fontSize:13,marginTop:6}}>All 36 seasons · full team rosters {loading && "· loading…"}</div>
-          <div style={{display:"flex",gap:8,marginTop:14}}>
+          <img src="/logo.png" alt="Amazing Race Prediction League" style={{width:"100%",maxWidth:340,marginBottom:14,display:"block"}}/>
+          {loading && <div style={{fontSize:11,color:"#475569",marginBottom:8}}>Loading…</div>}
+          <div style={{display:"flex",gap:8}}>
             <button onClick={()=>setScreen("rules")} style={{...css.btn("g"),flex:1,padding:"9px 12px",fontSize:13}}>📖 Rules</button>
             <button onClick={()=>{setScreen("alltime");loadSavedSeasons();}} style={{...css.btn("g"),flex:1,padding:"9px 12px",fontSize:13}}>🏆 All-Time</button>
           </div>
