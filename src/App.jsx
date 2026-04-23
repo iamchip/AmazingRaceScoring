@@ -440,13 +440,14 @@ const css = {
 };
 
 // ─── ALL-PLAYERS EPISODE MODAL ──────────────────────────────────────────────
-function AllEpisodeModal({ players, teams, onSave, onClose }) {
+function AllEpisodeModal({ players, teams, previouslyEliminated = [], onSave, onClose }) {
   const maxEp = Math.max(0, ...players.map(p=>(p.active_events||[]).filter(e=>e.event_type==="episode").length));
   const [ep, setEp] = useState(maxEp + 1);
   const [first, setFirst] = useState("");
   const [second, setSecond] = useState("");
   const [third, setThird] = useState("");
-  const [eliminatedTeams, setEliminatedTeams] = useState([]); // shared list of team ids eliminated this ep
+  // Start with previously eliminated teams already checked
+  const [eliminatedTeams, setEliminatedTeams] = useState(previouslyEliminated.map(Number));
 
   const getTeam = tid => teams.find(t=>t.id===tid);
   const allTeams = [...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname));
@@ -574,7 +575,6 @@ export default function App() {
   const season = SEASONS[selSeason];
   const teams = season?.teams || [];
 
-  // Compute score from nested events
   const calcScore = p => (p.active_events||[]).reduce((s,e)=>s+e.points, 0);
   const sorted = [...players].sort((a,b)=>calcScore(b)-calcScore(a));
   const seasonNums = Object.keys(SEASONS).map(Number).reverse();
@@ -583,6 +583,27 @@ export default function App() {
     : seasonNums;
   const modalPlayer = modal ? players.find(p=>p.id===modal.playerId) : null;
   function getTeam(tid) { return teams.find(t=>t.id===tid); }
+
+  // Derive previously eliminated team IDs from breakdown text across all players' events
+  // Format: "Survived X: +N" means X survived, absence means eliminated
+  // Simpler: any team ID that appears in NO player's blind_team or picked_team anymore
+  // after a buyback can be inferred eliminated. But most reliable: track via explicit state.
+  // We'll store it in localStorage keyed by season since it's per-device coordination.
+  const [eliminatedHistory, setEliminatedHistory] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("ar_elim_history")||"{}"); } catch { return {}; }
+  });
+  const seasonElimKey = `season_${selSeason}`;
+  const previouslyEliminatedTeamIds = (eliminatedHistory[seasonElimKey] || []).map(Number);
+
+  function recordEliminatedTeams(teamIds) {
+    setEliminatedHistory(prev => {
+      const existing = (prev[seasonElimKey]||[]).map(Number);
+      const merged = [...new Set([...existing, ...teamIds.map(Number)])];
+      const next = {...prev, [seasonElimKey]: merged};
+      try { localStorage.setItem("ar_elim_history", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }
 
   // Load active state from Supabase
   async function loadActive() {
@@ -680,6 +701,9 @@ export default function App() {
 
   async function scoreEpisode(ep) {
     // ep = { episode, place1, place2, place3, eliminated: { [playerId]: [teamId,...] } }
+    // Record all eliminated team IDs to history
+    const allElimTeamIds = [...new Set(Object.values(ep.eliminated).flat().map(Number))];
+    if (allElimTeamIds.length > 0) recordEliminatedTeams(allElimTeamIds);
     setSyncing(true);
     try {
       await Promise.all(players.map(async pl => {
@@ -892,12 +916,14 @@ export default function App() {
   );
 
   // ── SETUP ─────────────────────────────────────────────────────────────────
-  if (screen==="setup") return (
+  if (screen==="setup") {
+  const setupTeams = SEASONS[selSeason]?.teams || [];
+  return (
     <div style={css.app}>
       <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
       <div style={css.hdr}>
         <button onClick={()=>setScreen("home")} style={{background:"none",border:"none",color:"#f1c40f",fontSize:22,cursor:"pointer"}}>←</button>
-        <div><div style={css.ttl}>{season?.name}</div><div style={css.sub}>{teams.length} teams · player setup</div></div>
+        <div><div style={css.ttl}>{season?.name}</div><div style={css.sub}>{setupTeams.length} teams · player setup</div></div>
       </div>
       <div style={{padding:"16px 16px 100px"}}>
         {players.length>0 && players.some(p=>(p.active_events||[]).length>0) && (
@@ -931,7 +957,7 @@ export default function App() {
               <select value={pl.blind_team||""} onChange={e=>updatePlayerField(pl.id,{blind_team:Number(e.target.value)||null})}
                 style={{...css.inp,fontSize:14}}>
                 <option value="">— Select team —</option>
-                {[...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname)).map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
+                {[...setupTeams].sort((a,b)=>a.nickname.localeCompare(b.nickname)).map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
               </select>
             </div>
             <div style={{marginBottom:10}}>
@@ -939,7 +965,7 @@ export default function App() {
               <select value={pl.picked_team||""} onChange={e=>updatePlayerField(pl.id,{picked_team:Number(e.target.value)||null})}
                 style={{...css.inp,fontSize:14}}>
                 <option value="">— Select team —</option>
-                {[...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname)).map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
+                {[...setupTeams].sort((a,b)=>a.nickname.localeCompare(b.nickname)).map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
               </select>
             </div>
             <div>
@@ -964,6 +990,7 @@ export default function App() {
       </div>
     </div>
   );
+  }
 
   // ── SCORING ───────────────────────────────────────────────────────────────
   if (screen==="scoring") return (
@@ -1108,6 +1135,7 @@ export default function App() {
 
       {modal?.type==="episode"&&(
         <AllEpisodeModal players={players} teams={teams}
+          previouslyEliminated={previouslyEliminatedTeamIds}
           onSave={ep=>{scoreEpisode(ep);setModal(null);}}
           onClose={()=>setModal(null)}/>
       )}
