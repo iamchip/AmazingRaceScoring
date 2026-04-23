@@ -323,7 +323,12 @@ const db = {
   getActiveSeason: () => sb("active_season?id=eq.1", "GET"),
   setActiveSeason: (season_number, season_name) => sb(
     "active_season?id=eq.1", "PATCH",
-    { season_number, season_name, updated_at: new Date().toISOString() },
+    { season_number, season_name, eliminated_teams: [], updated_at: new Date().toISOString() },
+    { "Prefer": "return=minimal" }
+  ),
+  updateEliminatedTeams: (teamIds) => sb(
+    "active_season?id=eq.1", "PATCH",
+    { eliminated_teams: teamIds, updated_at: new Date().toISOString() },
     { "Prefer": "return=minimal" }
   ),
 
@@ -589,20 +594,12 @@ export default function App() {
   // Simpler: any team ID that appears in NO player's blind_team or picked_team anymore
   // after a buyback can be inferred eliminated. But most reliable: track via explicit state.
   // We'll store it in localStorage keyed by season since it's per-device coordination.
-  const [eliminatedHistory, setEliminatedHistory] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("ar_elim_history")||"{}"); } catch { return {}; }
-  });
-  const seasonElimKey = `season_${selSeason}`;
-  const previouslyEliminatedTeamIds = (eliminatedHistory[seasonElimKey] || []).map(Number);
+  const [previouslyEliminatedTeamIds, setPreviouslyEliminatedTeamIds] = useState([]);
 
-  function recordEliminatedTeams(teamIds) {
-    setEliminatedHistory(prev => {
-      const existing = (prev[seasonElimKey]||[]).map(Number);
-      const merged = [...new Set([...existing, ...teamIds.map(Number)])];
-      const next = {...prev, [seasonElimKey]: merged};
-      try { localStorage.setItem("ar_elim_history", JSON.stringify(next)); } catch {}
-      return next;
-    });
+  async function recordEliminatedTeams(teamIds) {
+    const merged = [...new Set([...previouslyEliminatedTeamIds, ...teamIds.map(Number)])];
+    setPreviouslyEliminatedTeamIds(merged);
+    try { await db.updateEliminatedTeams(merged); } catch(e) { console.error("Error saving elim teams:", e); }
   }
 
   // Load active state from Supabase
@@ -615,6 +612,7 @@ export default function App() {
       ]);
       const activeSeason = seasonRows?.[0];
       if (activeSeason?.season_number) setSelSeason(activeSeason.season_number);
+      setPreviouslyEliminatedTeamIds((activeSeason?.eliminated_teams || []).map(Number));
       const sorted = (playerRows || []).map(p=>({
         ...p,
         active_events: (p.active_events||[]).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)),
@@ -830,6 +828,7 @@ export default function App() {
       await db.setActiveSeason(null, null);
       setPlayers([]);
       setSelSeason(null);
+      setPreviouslyEliminatedTeamIds([]);
     } catch(e) { alert("Error clearing: " + e.message); }
     finally { setSyncing(false); }
   }
