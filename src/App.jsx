@@ -677,6 +677,8 @@ export default function App() {
     } catch(e) { alert("Error deleting episode: " + (e.message||JSON.stringify(e))); }
     finally { setSyncing(false); }
   }
+
+  async function scoreEpisode(ep) {
     // ep = { episode, place1, place2, place3, eliminated: { [playerId]: [teamId,...] } }
     setSyncing(true);
     try {
