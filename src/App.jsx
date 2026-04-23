@@ -492,7 +492,7 @@ function AllEpisodeModal({ players, teams, previouslyEliminated = [], onSave, on
       <div style={{fontSize:11,color:"#ef4444",fontWeight:700,letterSpacing:1,marginBottom:8}}>💀 ELIMINATED THIS EPISODE</div>
       <div style={{marginBottom:14}}>
         <div style={{fontSize:11,color:"#64748b",marginBottom:8}}>Select any teams eliminated this leg:</div>
-        {allTeams.map(t=>{
+        {allTeams.filter(t=>!previouslyEliminated.map(Number).includes(Number(t.id))).map(t=>{
           const isElim = elimSet.has(Number(t.id));
           const playersWithTeam = players.filter(p=>Number(p.blind_team)===Number(t.id)||Number(p.picked_team)===Number(t.id));
           return (
