@@ -900,7 +900,7 @@ export default function App() {
       <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
       <div style={{background:"linear-gradient(160deg,#1a1f2e,#0f1420 55%)",minHeight:"100vh",display:"flex",flexDirection:"column",padding:"50px 22px 40px"}}>
         <div style={{marginBottom:16}}>
-          <img src="/logo.png" alt="Amazing Race Prediction League" style={{width:"100%",maxWidth:340,marginBottom:14,display:"block"}}/>
+          <img src="/logo.png" alt="Amazing Race Prediction League" style={{width:"100%",maxWidth:340,marginBottom:14,display:"block",marginLeft:"auto",marginRight:"auto"}}/>
           {loading && <div style={{fontSize:11,color:"#475569",marginBottom:8}}>Loading…</div>}
           <div style={{display:"flex",gap:8}}>
             <button onClick={()=>setScreen("rules")} style={{...css.btn("g"),flex:1,padding:"9px 12px",fontSize:13}}>📖 Rules</button>
