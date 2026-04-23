@@ -452,27 +452,27 @@ function AllEpisodeModal({ players, teams, onSave, onClose }) {
   const allTeams = [...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname));
 
   // All teams that any player has picked (to show in elimination section)
-  const pickedTeamIds = [...new Set(players.flatMap(p=>[p.picked_team, p.blind_team].filter(Boolean)))];
-  const pickedTeams = allTeams.filter(t=>pickedTeamIds.includes(t.id));
+  const pickedTeamIds = [...new Set(players.flatMap(p=>[p.picked_team, p.blind_team].filter(Boolean)).map(Number))];
+  const pickedTeams = allTeams.filter(t=>pickedTeamIds.includes(Number(t.id)));
 
   // Teams still racing (not eliminated) for place dropdowns
-  const stillRacing = allTeams.filter(t=>!eliminatedTeams.includes(t.id));
+  const stillRacing = allTeams.filter(t=>!eliminatedTeams.map(Number).includes(Number(t.id)));
 
   const toggleElimTeam = (tid) => {
-    setEliminatedTeams(prev => prev.includes(tid) ? prev.filter(t=>t!==tid) : [...prev, tid]);
-    // Clear place selections if that team gets eliminated
-    if (!eliminatedTeams.includes(tid)) {
-      if (first===tid) setFirst("");
-      if (second===tid) setSecond("");
-      if (third===tid) setThird("");
+    const tidNum = Number(tid);
+    const nowEliminated = !eliminatedTeams.map(Number).includes(tidNum);
+    setEliminatedTeams(prev => nowEliminated ? [...prev, tidNum] : prev.filter(t=>Number(t)!==tidNum));
+    if (nowEliminated) {
+      if (Number(first)===tidNum) setFirst("");
+      if (Number(second)===tidNum) setSecond("");
+      if (Number(third)===tidNum) setThird("");
     }
   };
 
-  // Build the per-player eliminated map from the shared list
   const buildEliminatedMap = () => {
     const map = {};
     players.forEach(pl => {
-      const myElim = [pl.picked_team, pl.blind_team].filter(t=>t&&eliminatedTeams.includes(t));
+      const myElim = [pl.picked_team, pl.blind_team].filter(t=>t&&eliminatedTeams.map(Number).includes(Number(t)));
       if (myElim.length > 0) map[pl.id] = myElim;
     });
     return map;
@@ -487,8 +487,8 @@ function AllEpisodeModal({ players, teams, onSave, onClose }) {
       <div style={{marginBottom:14}}>
         <div style={{fontSize:11,color:"#64748b",marginBottom:8}}>Select any teams eliminated this leg:</div>
         {allTeams.map(t=>{
-          const isElim = eliminatedTeams.includes(t.id);
-          const playersWithTeam = players.filter(p=>p.blind_team===t.id||p.picked_team===t.id);
+          const isElim = eliminatedTeams.map(Number).includes(Number(t.id));
+          const playersWithTeam = players.filter(p=>Number(p.blind_team)===Number(t.id)||Number(p.picked_team)===Number(t.id));
           return (
             <div key={t.id} onClick={()=>toggleElimTeam(t.id)} style={{
               background:isElim?"#ef444422":"#0f1420",
@@ -520,7 +520,7 @@ function AllEpisodeModal({ players, teams, onSave, onClose }) {
           <div style={{fontSize:11,color,fontWeight:700,letterSpacing:1,marginBottom:5}}>{label}</div>
           <select value={val} onChange={e=>set(Number(e.target.value)||"")} style={{...css.inp,fontSize:14}}>
             <option value="">— No player's team —</option>
-            {stillRacing.filter(t=>pickedTeamIds.includes(t.id)).map(t=>(
+            {stillRacing.filter(t=>pickedTeamIds.includes(Number(t.id))).map(t=>(
               <option key={t.id} value={t.id}>{t.nickname}</option>
             ))}
           </select>
