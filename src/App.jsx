@@ -1147,6 +1147,7 @@ export default function App() {
             </button>
           </div>
         )}
+        {tab==="picks" && players.map(pl=>(
           <div key={pl.id} style={css.card}>
             <div style={{fontWeight:700,fontSize:16,marginBottom:12}}>{pl.name}</div>
             <div style={{marginBottom:10}}>
