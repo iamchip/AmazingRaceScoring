@@ -451,34 +451,34 @@ function AllEpisodeModal({ players, teams, previouslyEliminated = [], onSave, on
   const [first, setFirst] = useState("");
   const [second, setSecond] = useState("");
   const [third, setThird] = useState("");
-  // Start with previously eliminated teams already checked
-  const [eliminatedTeams, setEliminatedTeams] = useState(previouslyEliminated.map(Number));
+  // Use a Set stored in state — initialized from previouslyEliminated
+  const [elimSet, setElimSet] = useState(() => new Set(previouslyEliminated.map(Number)));
 
-  const getTeam = tid => teams.find(t=>t.id===tid);
   const allTeams = [...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname));
-
-  // All teams that any player has picked (to show in elimination section)
+  const eliminatedTeams = [...elimSet];
+  const stillRacing = allTeams.filter(t=>!elimSet.has(Number(t.id)));
   const pickedTeamIds = [...new Set(players.flatMap(p=>[p.picked_team, p.blind_team].filter(Boolean)).map(Number))];
-  const pickedTeams = allTeams.filter(t=>pickedTeamIds.includes(Number(t.id)));
-
-  // Teams still racing (not eliminated) for place dropdowns
-  const stillRacing = allTeams.filter(t=>!eliminatedTeams.map(Number).includes(Number(t.id)));
 
   const toggleElimTeam = (tid) => {
     const tidNum = Number(tid);
-    const nowEliminated = !eliminatedTeams.map(Number).includes(tidNum);
-    setEliminatedTeams(prev => nowEliminated ? [...prev, tidNum] : prev.filter(t=>Number(t)!==tidNum));
-    if (nowEliminated) {
-      if (Number(first)===tidNum) setFirst("");
-      if (Number(second)===tidNum) setSecond("");
-      if (Number(third)===tidNum) setThird("");
-    }
+    setElimSet(prev => {
+      const next = new Set(prev);
+      if (next.has(tidNum)) {
+        next.delete(tidNum);
+      } else {
+        next.add(tidNum);
+        if (Number(first)===tidNum) setFirst("");
+        if (Number(second)===tidNum) setSecond("");
+        if (Number(third)===tidNum) setThird("");
+      }
+      return next;
+    });
   };
 
   const buildEliminatedMap = () => {
     const map = {};
     players.forEach(pl => {
-      const myElim = [pl.picked_team, pl.blind_team].filter(t=>t&&eliminatedTeams.map(Number).includes(Number(t)));
+      const myElim = [pl.picked_team, pl.blind_team].filter(t=>t&&elimSet.has(Number(t)));
       if (myElim.length > 0) map[pl.id] = myElim;
     });
     return map;
@@ -493,7 +493,7 @@ function AllEpisodeModal({ players, teams, previouslyEliminated = [], onSave, on
       <div style={{marginBottom:14}}>
         <div style={{fontSize:11,color:"#64748b",marginBottom:8}}>Select any teams eliminated this leg:</div>
         {allTeams.map(t=>{
-          const isElim = eliminatedTeams.map(Number).includes(Number(t.id));
+          const isElim = elimSet.has(Number(t.id));
           const playersWithTeam = players.filter(p=>Number(p.blind_team)===Number(t.id)||Number(p.picked_team)===Number(t.id));
           return (
             <div key={t.id} onClick={()=>toggleElimTeam(t.id)} style={{
@@ -513,7 +513,7 @@ function AllEpisodeModal({ players, teams, previouslyEliminated = [], onSave, on
             </div>
           );
         })}
-        <div onClick={()=>setEliminatedTeams([])} style={{
+        <div onClick={()=>setElimSet(new Set())} style={{
           background:"transparent",border:"1px solid #1e2a3a",borderRadius:10,
           padding:"8px 14px",cursor:"pointer",textAlign:"center",color:"#64748b",fontSize:13,marginTop:4}}>
           ○ No elimination this episode
@@ -533,7 +533,7 @@ function AllEpisodeModal({ players, teams, previouslyEliminated = [], onSave, on
         </div>
       ))}
 
-      <button onClick={()=>onSave({episode:ep, place1:first, place2:second, place3:third, eliminated:buildEliminatedMap()})}
+      <button onClick={()=>onSave({episode:ep, place1:first, place2:second, place3:third, eliminated:buildEliminatedMap(), allEliminatedTeamIds:[...elimSet]})}
         style={{...css.btn("p"),marginTop:8}}>✓ Save Episode for All Players</button>
     </Sheet>
   );
@@ -597,9 +597,9 @@ export default function App() {
   const [previouslyEliminatedTeamIds, setPreviouslyEliminatedTeamIds] = useState([]);
 
   async function recordEliminatedTeams(teamIds) {
-    const merged = [...new Set([...previouslyEliminatedTeamIds, ...teamIds.map(Number)])];
-    setPreviouslyEliminatedTeamIds(merged);
-    try { await db.updateEliminatedTeams(merged); } catch(e) { console.error("Error saving elim teams:", e); }
+    const deduped = [...new Set(teamIds.map(Number))];
+    setPreviouslyEliminatedTeamIds(deduped);
+    try { await db.updateEliminatedTeams(deduped); } catch(e) { console.error("Error saving elim teams:", e); }
   }
 
   // Load active state from Supabase
@@ -611,13 +611,16 @@ export default function App() {
         db.getActivePlayers(),
       ]);
       const activeSeason = seasonRows?.[0];
-      if (activeSeason?.season_number) setSelSeason(activeSeason.season_number);
+      // Only set season from DB if we don't already have one selected locally
+      if (activeSeason?.season_number) {
+        setSelSeason(n => n || activeSeason.season_number);
+      }
       setPreviouslyEliminatedTeamIds((activeSeason?.eliminated_teams || []).map(Number));
-      const sorted = (playerRows || []).map(p=>({
+      const sortedPlayers = (playerRows || []).map(p=>({
         ...p,
         active_events: (p.active_events||[]).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)),
       }));
-      setPlayers(sorted);
+      setPlayers(sortedPlayers);
     } catch(e) {
       console.error("Load failed", e);
     } finally {
@@ -698,10 +701,11 @@ export default function App() {
   }
 
   async function scoreEpisode(ep) {
-    // ep = { episode, place1, place2, place3, eliminated: { [playerId]: [teamId,...] } }
-    // Record all eliminated team IDs to history
-    const allElimTeamIds = [...new Set(Object.values(ep.eliminated).flat().map(Number))];
-    if (allElimTeamIds.length > 0) recordEliminatedTeams(allElimTeamIds);
+    // ep = { episode, place1, place2, place3, eliminated: { [playerId]: [teamId,...] }, allEliminatedTeamIds: [...] }
+    // Save the full current eliminated team list to DB
+    if (ep.allEliminatedTeamIds) {
+      await recordEliminatedTeams(ep.allEliminatedTeamIds);
+    }
     setSyncing(true);
     try {
       await Promise.all(players.map(async pl => {
@@ -1133,7 +1137,7 @@ export default function App() {
       </div>
 
       {modal?.type==="episode"&&(
-        <AllEpisodeModal players={players} teams={teams}
+        <AllEpisodeModal key={previouslyEliminatedTeamIds.join(",")} players={players} teams={teams}
           previouslyEliminated={previouslyEliminatedTeamIds}
           onSave={ep=>{scoreEpisode(ep);setModal(null);}}
           onClose={()=>setModal(null)}/>
