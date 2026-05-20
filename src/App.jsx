@@ -560,21 +560,30 @@ function PenaltyModal({ onSave, onClose }) {
 // ─── BUYBACK MODAL ──────────────────────────────────────────────────────────
 function BuybackModal({ player, teams, onApply, onUpdateField, onClose }) {
   const [step, setStep] = useState("how-many");
-  const [both, setBoth] = useState(false);
+  const [eliminatedSlot, setEliminatedSlot] = useState(null);
   const sortedTeams = [...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname));
+  const blindTeam = teams.find(t=>t.id===player.blind_team);
+  const pickedTeam = teams.find(t=>t.id===player.picked_team);
 
-  function handleApply(bothElim) {
-    setBoth(bothElim);
-    onApply(bothElim);
-    // Clear only the eliminated slot(s)
-    if (bothElim) {
-      onUpdateField({ blind_team: null, picked_team: null });
+  function handleHowMany(both) {
+    onApply(both);
+    if (both) {
+      setEliminatedSlot("both");
+      onUpdateField({ blind_team: null, picked_team: null, buyback_team: null });
+      setStep("pick-replacement");
     } else {
-      // One eliminated — clear blind only (most common buyback scenario)
-      // Player can adjust if it was their picked that got eliminated
-      onUpdateField({ blind_team: null });
+      setStep("which-team");
     }
-    setStep("swap");
+  }
+
+  function handleWhichTeam(slot) {
+    setEliminatedSlot(slot);
+    if (slot === "blind") {
+      onUpdateField({ blind_team: null, buyback_team: null });
+    } else {
+      onUpdateField({ picked_team: null, buyback_team: null });
+    }
+    setStep("pick-replacement");
   }
 
   return (
@@ -582,61 +591,63 @@ function BuybackModal({ player, teams, onApply, onUpdateField, onClose }) {
       {step==="how-many" && (
         <>
           <div style={{color:"#94a3b8",marginBottom:14,fontSize:14}}>How many of your teams were eliminated?</div>
-          <button onClick={()=>handleApply(false)} style={{...css.btn("d"),marginBottom:10}}>One eliminated — −10pts</button>
-          <button onClick={()=>handleApply(true)} style={css.btn("d")}>Both eliminated — −20pts</button>
+          <button onClick={()=>handleHowMany(false)} style={{...css.btn("d"),marginBottom:10}}>One eliminated — −10pts</button>
+          <button onClick={()=>handleHowMany(true)} style={css.btn("d")}>Both eliminated — −20pts</button>
         </>
       )}
-      {step==="swap" && (
+
+      {step==="which-team" && (
+        <>
+          <div style={{color:"#94a3b8",marginBottom:14,fontSize:14}}>Which team was eliminated?</div>
+          {blindTeam && (
+            <button onClick={()=>handleWhichTeam("blind")} style={{...css.btn("s"),marginBottom:10,textAlign:"left",padding:"12px 16px",display:"block"}}>
+              <div style={{fontSize:11,color:"#f1c40f",fontWeight:700,marginBottom:2}}>BLIND PAIR</div>
+              <div style={{fontSize:15,fontWeight:700}}>{blindTeam.nickname}</div>
+            </button>
+          )}
+          {pickedTeam && (
+            <button onClick={()=>handleWhichTeam("picked")} style={{...css.btn("s"),textAlign:"left",padding:"12px 16px",display:"block"}}>
+              <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,marginBottom:2}}>PICKED PAIR</div>
+              <div style={{fontSize:15,fontWeight:700}}>{pickedTeam.nickname}</div>
+            </button>
+          )}
+        </>
+      )}
+
+      {step==="pick-replacement" && (
         <>
           <div style={{...css.card,background:"#ef444411",borderColor:"#ef444433",marginBottom:14}}>
             <div style={{fontSize:13,color:"#f87171",fontWeight:600,marginBottom:2}}>Penalty applied ✓</div>
             <div style={{fontSize:12,color:"#94a3b8",lineHeight:1.5}}>
-              Buyback team counts as <strong style={{color:"#e2e8f0"}}>picked only</strong> — no double points.
+              Buyback team scores at <strong style={{color:"#e2e8f0"}}>1× points only</strong> — no blind bonus.
             </div>
           </div>
-
-          {/* Show surviving picks as read-only */}
-          {player.picked_team && (
+          {eliminatedSlot==="blind" && pickedTeam && (
             <div style={{...css.card,marginBottom:12,padding:"10px 14px"}}>
               <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:2}}>✋ KEEPING PICKED PAIR</div>
-              <div style={{fontSize:14,fontWeight:600,color:"#e2e8f0"}}>
-                {teams.find(t=>t.id===player.picked_team)?.nickname}
-              </div>
+              <div style={{fontSize:14,fontWeight:600}}>{pickedTeam.nickname}</div>
             </div>
           )}
-          {player.blind_team && (
+          {eliminatedSlot==="picked" && blindTeam && (
             <div style={{...css.card,marginBottom:12,padding:"10px 14px"}}>
               <div style={{fontSize:11,color:"#f1c40f",fontWeight:700,letterSpacing:1,marginBottom:2}}>🎲 KEEPING BLIND PAIR</div>
-              <div style={{fontSize:14,fontWeight:600,color:"#e2e8f0"}}>
-                {teams.find(t=>t.id===player.blind_team)?.nickname}
-              </div>
+              <div style={{fontSize:14,fontWeight:600}}>{blindTeam.nickname}</div>
             </div>
           )}
-
-          {!player.picked_team && (
-            <div style={{marginBottom:12}}>
-              <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:6}}>✋ NEW PICKED PAIR</div>
-              <select value={player.picked_team||""} onChange={e=>onUpdateField({picked_team:Number(e.target.value)||null, buyback_team:Number(e.target.value)||null})}
-                style={{...css.inp,fontSize:14}}>
-                <option value="">— Select replacement team —</option>
-                {sortedTeams.map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
-              </select>
-            </div>
-          )}
-          {!player.blind_team && (
-            <div style={{marginBottom:16}}>
-              <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:6}}>
-                ✋ NEW PICKED PAIR {player.picked_team ? "(replacing blind)" : ""}
-              </div>
-              <select value={player.blind_team||""} onChange={e=>onUpdateField({blind_team:Number(e.target.value)||null, buyback_team:Number(e.target.value)||null})}
-                style={{...css.inp,fontSize:14}}>
-                <option value="">— Select replacement team —</option>
-                {sortedTeams.map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
-              </select>
-              <div style={{fontSize:11,color:"#475569",marginTop:6}}>This team scores at 1× points (no blind bonus).</div>
-            </div>
-          )}
-
+          <div style={{marginBottom:16}}>
+            <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:6}}>✋ SELECT BUYBACK TEAM</div>
+            <select defaultValue="" onChange={e=>{
+              const id = Number(e.target.value)||null;
+              if (eliminatedSlot==="blind" || eliminatedSlot==="both") {
+                onUpdateField({ blind_team: id, buyback_team: id });
+              } else {
+                onUpdateField({ picked_team: id, buyback_team: id });
+              }
+            }} style={{...css.inp,fontSize:14}}>
+              <option value="">— Select replacement team —</option>
+              {sortedTeams.map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
+            </select>
+          </div>
           <button onClick={onClose} style={css.btn("p")}>✓ Done</button>
         </>
       )}
