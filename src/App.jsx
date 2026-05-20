@@ -560,12 +560,20 @@ function PenaltyModal({ onSave, onClose }) {
 // ─── BUYBACK MODAL ──────────────────────────────────────────────────────────
 function BuybackModal({ player, teams, onApply, onUpdateField, onClose }) {
   const [step, setStep] = useState("how-many");
+  const [both, setBoth] = useState(false);
   const sortedTeams = [...teams].sort((a,b)=>a.nickname.localeCompare(b.nickname));
 
-  function handleApply(both) {
-    onApply(both);
-    // Clear blind_team immediately — buyback replaces it with a picked-only team
-    onUpdateField({ blind_team: null, picked_team: null });
+  function handleApply(bothElim) {
+    setBoth(bothElim);
+    onApply(bothElim);
+    // Clear only the eliminated slot(s)
+    if (bothElim) {
+      onUpdateField({ blind_team: null, picked_team: null });
+    } else {
+      // One eliminated — clear blind only (most common buyback scenario)
+      // Player can adjust if it was their picked that got eliminated
+      onUpdateField({ blind_team: null });
+    }
     setStep("swap");
   }
 
@@ -582,16 +590,53 @@ function BuybackModal({ player, teams, onApply, onUpdateField, onClose }) {
         <>
           <div style={{...css.card,background:"#ef444411",borderColor:"#ef444433",marginBottom:14}}>
             <div style={{fontSize:13,color:"#f87171",fontWeight:600,marginBottom:2}}>Penalty applied ✓</div>
-            <div style={{fontSize:12,color:"#94a3b8",lineHeight:1.5}}>Pick your new team below. It counts as your <strong style={{color:"#e2e8f0"}}>picked pair only</strong> — no double points.</div>
+            <div style={{fontSize:12,color:"#94a3b8",lineHeight:1.5}}>
+              Buyback team counts as <strong style={{color:"#e2e8f0"}}>picked only</strong> — no double points.
+            </div>
           </div>
-          <div style={{marginBottom:16}}>
-            <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:6}}>✋ NEW PICKED PAIR</div>
-            <select value={player.picked_team||""} onChange={e=>onUpdateField({picked_team:Number(e.target.value)||null})}
-              style={{...css.inp,fontSize:14}}>
-              <option value="">— Select new team —</option>
-              {sortedTeams.map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
-            </select>
-          </div>
+
+          {/* Show surviving picks as read-only */}
+          {player.picked_team && (
+            <div style={{...css.card,marginBottom:12,padding:"10px 14px"}}>
+              <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:2}}>✋ KEEPING PICKED PAIR</div>
+              <div style={{fontSize:14,fontWeight:600,color:"#e2e8f0"}}>
+                {teams.find(t=>t.id===player.picked_team)?.nickname}
+              </div>
+            </div>
+          )}
+          {player.blind_team && (
+            <div style={{...css.card,marginBottom:12,padding:"10px 14px"}}>
+              <div style={{fontSize:11,color:"#f1c40f",fontWeight:700,letterSpacing:1,marginBottom:2}}>🎲 KEEPING BLIND PAIR</div>
+              <div style={{fontSize:14,fontWeight:600,color:"#e2e8f0"}}>
+                {teams.find(t=>t.id===player.blind_team)?.nickname}
+              </div>
+            </div>
+          )}
+
+          {!player.picked_team && (
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:6}}>✋ NEW PICKED PAIR</div>
+              <select value={player.picked_team||""} onChange={e=>onUpdateField({picked_team:Number(e.target.value)||null, buyback_team:Number(e.target.value)||null})}
+                style={{...css.inp,fontSize:14}}>
+                <option value="">— Select replacement team —</option>
+                {sortedTeams.map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
+              </select>
+            </div>
+          )}
+          {!player.blind_team && (
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:11,color:"#94a3b8",fontWeight:700,letterSpacing:1,marginBottom:6}}>
+                ✋ NEW PICKED PAIR {player.picked_team ? "(replacing blind)" : ""}
+              </div>
+              <select value={player.blind_team||""} onChange={e=>onUpdateField({blind_team:Number(e.target.value)||null, buyback_team:Number(e.target.value)||null})}
+                style={{...css.inp,fontSize:14}}>
+                <option value="">— Select replacement team —</option>
+                {sortedTeams.map(t=><option key={t.id} value={t.id}>{t.nickname}</option>)}
+              </select>
+              <div style={{fontSize:11,color:"#475569",marginTop:6}}>This team scores at 1× points (no blind bonus).</div>
+            </div>
+          )}
+
           <button onClick={onClose} style={css.btn("p")}>✓ Done</button>
         </>
       )}
@@ -752,7 +797,7 @@ export default function App() {
     try {
       await Promise.all(players.map(async pl => {
         let pts = 0; const breakdown = [];
-        const isBlind = tid => pl.blind_team === tid;
+        const isBlind = tid => pl.blind_team === tid && pl.buyback_team !== tid;
         const mult = tid => isBlind(tid) ? 2 : 1;
         const myTeams = [pl.picked_team, pl.blind_team].filter(Boolean);
         const elimForPlayer = ep.eliminated[pl.id] || [];
