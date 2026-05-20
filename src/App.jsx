@@ -854,12 +854,23 @@ export default function App() {
     }
   }
 
+  // Delete ALL existing saved season entries for this season number (fetch fresh to avoid stale state)
+  async function deleteExistingSeason(seasonNumber) {
+    const fresh = await db.getSeasons();
+    const existing = (fresh || []).filter(s=>s.season_number===seasonNumber);
+    for (const s of existing) {
+      await db.deleteResults(s.id);
+      await db.deleteSeason(s.id);
+    }
+  }
+
   // End season: save to all-time leaderboard then clear active state
   async function endSeason() {
     if (players.length === 0) return;
     if (!confirm(`End ${season?.name}? This will save final scores to the All-Time Leaderboard and clear the active season for everyone.`)) return;
     setSaving(true);
     try {
+      await deleteExistingSeason(selSeason);
       const results = sorted.map((pl,i)=>({
         player_name: pl.name,
         score: calcScore(pl),
@@ -877,7 +888,6 @@ export default function App() {
       const savedSeason = Array.isArray(inserted) ? inserted[0] : inserted;
       if (!savedSeason?.id) throw new Error("Insert succeeded but no ID returned. Check Supabase RLS policies.");
       await db.saveResults(results.map(r=>({...r, saved_season_id: savedSeason.id})));
-      // Clear active season for everyone
       await db.clearPlayers();
       await db.setActiveSeason(null, null);
       setPlayers([]);
@@ -893,11 +903,12 @@ export default function App() {
     }
   }
 
-  // Save current season to all-time leaderboard
+  // Save current season to all-time leaderboard (mid-season snapshot, overwrites previous)
   async function saveSeason() {
     if (players.length === 0) return;
     setSaving(true);
     try {
+      await deleteExistingSeason(selSeason);
       const results = sorted.map((pl,i)=>({
         player_name: pl.name,
         score: calcScore(pl),
@@ -915,25 +926,12 @@ export default function App() {
       const savedSeason = Array.isArray(inserted) ? inserted[0] : inserted;
       if (!savedSeason?.id) throw new Error("Insert succeeded but no ID returned. Check Supabase RLS policies.");
       await db.saveResults(results.map(r=>({...r, saved_season_id: savedSeason.id})));
+      await loadSavedSeasons();
       alert(`${season.name} saved to All-Time Leaderboard!`);
     } catch(e) {
       alert("Save failed: " + (e.message || JSON.stringify(e)));
     } finally {
       setSaving(false);
-    }
-  }
-
-  // Load saved seasons from Supabase
-  async function loadSavedSeasons() {
-    setDbLoading(true);
-    setDbError(null);
-    try {
-      const data = await db.getSeasons();
-      setSavedSeasons(data || []);
-    } catch(e) {
-      setDbError("Could not connect to database. Check your Supabase credentials.");
-    } finally {
-      setDbLoading(false);
     }
   }
 
