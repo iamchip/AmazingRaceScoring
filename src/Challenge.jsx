@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 
-// ─── Supabase config (same project as Amazing Race) ───────────────────────────
+// ─── Supabase config ───────────────────────────────────────────────────────────
 const SUPABASE_URL = "https://qglbkzljfuwwkejbklwa.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnbGJremxqZnV3d2tlamJrbHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzY1NjIsImV4cCI6MjA5MjQ1MjU2Mn0.JDkR6a4mzXpJheujwwit6-E4HDctepwSZoZsF09Y2WU";
+
+const LOGO_B64 = "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K8DE60RBTXuj2G688cZrrrnmhhX+unfvrlgnT57Mj9iilNF11123Z8+eG2ywAcqUGgaEtNH0v379+nnZmFjRcsyBKxTsBfVmsi0FV6WIDwbZYM45CoaW4BNcsvfv318I3K699tqcYCJOPBjar70zBCYoFN7wclXIDddff31WpbCEtfr06bP00kvTlPNIMr4U4qRjKhLl8W266aZoqfN6hFaMTdGxKR74VCce6/LLL++xrrfeepZQEqY22WQTanZh6EmZogC2yaoUUmpflug9/U+R+KdQV1tttbXWWouc+QorrBC2tozRf1G83MaD5l+VbrbZZo7MV1999X333efy7bHHHhs9evQDDzxw//33uyu4/PLLHXL32muvlVdembnS4kHN8GA7eEIZi6dj17YDtgOGaFWwd/q2IBVbbLGFRS3Ev1USRQayHdekQnEEp5QxmoIXGKMcvWmq07vne9Y999zzwAMPuMp48MEHR40adeONN6ps9f3QQw/deuutbtx22WWXVVddlRVbTuJV8Z5gLBH1x9XIkSPHjBnz5JNPoqVwK6J8OQkw9KI62tx5551eKrCoGFDgYezYsWKA4cOHe1tiae+VSIB5sS8OeWZSFaIFcMIzDwG8JQjlyjs2YsQIyRHVI488wrnAIs6ClyupsBEhocwBwxs5ypssYZxzfRfZZ5992JbCEta67bbbDjvsMJ8EnpEjniSzLQXP4tQOtCFZEuRdd931f//3f6XO6xFqbTYFPAjA7wHxP15UIaJVDxqfZ2FKkagWaqhWSGg55u52fXiXBkm49957X3/99czvvvtuzxrDz6hRo5TKU0899eijj1533XUWki6JAiaoNvqvf/1rypQp8ql3u2dgyI+rhu985zvqbbnlllt88cWdGBZZZJFu3bqpEE5cGlx11VXq9qabbtLoOZHA8CZXPHusmFVWWcWthcjtBSRHYGhVCEO7wCiDww8/3BdHSyRqZyDbce1sTON1Lv9QhV5gxa3KvSHq1bvk4syJw9Gyc+fO3n8HCq3Ee0jZYcTH/oABA/yOR/PXv/61MxEPXFH2HZAmb6ATkXsr1L21yEvhNPrBBx8w5997goY+W0J+SNCIASMeYZjytdS9irAtZMgKhWCsSL722muXLhpC3mZgDJ3OGHJrlXDFp6E3FuM1xnvb2WKACX1DjFBRQ2qUxcADPwFDQv0X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";
+const LOGO_SRC = `data:image/png;base64,${LOGO_B64}`;
 
 async function sb(path, method = "GET", body = null, extraHeaders = {}) {
   const headers = {
@@ -24,101 +27,374 @@ async function sb(path, method = "GET", body = null, extraHeaders = {}) {
   return text ? JSON.parse(text) : null;
 }
 
-// ─── The Challenge seasons & competitor rosters ────────────────────────────────
-// Season list with competitor arrays (alphabetical). Add future seasons here.
+// ─── All seasons 1–42 ─────────────────────────────────────────────────────────
 const CHALLENGE_SEASONS = [
-  {
-    number: 40,
-    name: "Battle of the Eras",
-    year: 2024,
-    competitors: [
-      { id: 1, name: "Aneesa Ferreira" },
-      { id: 2, name: "Bananas" },
-      { id: 3, name: "Beth Stolarczyk" },
-      { id: 4, name: "Big T Fazakerley" },
-      { id: 5, name: "Brad Fiorenza" },
-      { id: 6, name: "CT Tamburello" },
-      { id: 7, name: "Cara Maria Sorbello" },
-      { id: 8, name: "Corey Lay" },
-      { id: 9, name: "Darrell Taylor" },
-      { id: 10, name: "Derrick Kosinski" },
-      { id: 11, name: "Derrick Henry" },
-      { id: 12, name: "Emmanuel Neagu" },
-      { id: 13, name: "Horacio Gutierrez Jr." },
-      { id: 14, name: "Jasmine Reynaud" },
-      { id: 15, name: "Jay Starrett" },
-      { id: 16, name: "Jonna Mannion" },
-      { id: 17, name: "Jordan Wiseley" },
-      { id: 18, name: "Kaycee Clark" },
-      { id: 19, name: "Kenny Clark" },
-      { id: 20, name: "Laurel Stucky" },
-      { id: 21, name: "Leroy Garrett" },
-      { id: 22, name: "Liv Jawando" },
-      { id: 23, name: "Mark Long" },
-      { id: 24, name: "Melissa Reeves" },
-      { id: 25, name: "Michele Fitzgerald" },
-      { id: 26, name: "Nany Gonzalez" },
-      { id: 27, name: "Olivia Kaiser" },
-      { id: 28, name: "Rachel Robinson" },
-      { id: 29, name: "Sarah Rice" },
-      { id: 30, name: "Susie Meister" },
-      { id: 31, name: "Tori Deal" },
-      { id: 32, name: "Veronica Portillo" },
-      { id: 33, name: "Wes Bergmann" },
-    ],
-  },
-  {
-    number: 39,
-    name: "Battle for a New Champion",
-    year: 2023,
-    competitors: [
-      { id: 1, name: "Amber Borzotra" },
-      { id: 2, name: "Aneesa Ferreira" },
-      { id: 3, name: "Berna Canbeldek" },
-      { id: 4, name: "Chauncey Palmer" },
-      { id: 5, name: "Devin Walker" },
-      { id: 6, name: "Emanuel Neagu" },
-      { id: 7, name: "Horacio Gutierrez Jr." },
-      { id: 8, name: "Jay Starrett" },
-      { id: 9, name: "Josh Martinez" },
-      { id: 10, name: "Kaycee Clark" },
-      { id: 11, name: "Kyland Young" },
-      { id: 12, name: "Laurel Stucky" },
-      { id: 13, name: "Michele Fitzgerald" },
-      { id: 14, name: "Moriah Jadea" },
-      { id: 15, name: "Nany Gonzalez" },
-      { id: 16, name: "Nurys Mateo" },
-      { id: 17, name: "Olivia Kaiser" },
-      { id: 18, name: "Ravyn Rochelle" },
-      { id: 19, name: "Theo Campbell" },
-      { id: 20, name: "Tori Deal" },
-    ],
-  },
-  {
-    number: 38,
-    name: "Ride or Dies",
-    year: 2022,
-    competitors: [
-      { id: 1, name: "Amber Borzotra" },
-      { id: 2, name: "Aneesa Ferreira" },
-      { id: 3, name: "Bananas" },
-      { id: 4, name: "CT Tamburello" },
-      { id: 5, name: "Danny McCray" },
-      { id: 6, name: "Devin Walker" },
-      { id: 7, name: "Emanuel Neagu" },
-      { id: 8, name: "Faysal Shafaat" },
-      { id: 9, name: "Jordan Wiseley" },
-      { id: 10, name: "Josh Martinez" },
-      { id: 11, name: "Kaycee Clark" },
-      { id: 12, name: "Laurel Stucky" },
-      { id: 13, name: "Nany Gonzalez" },
-      { id: 14, name: "Nelson Thomas" },
-      { id: 15, name: "Nurys Mateo" },
-      { id: 16, name: "Olivia Kaiser" },
-      { id: 17, name: "Tori Deal" },
-      { id: 18, name: "Veronica Portillo" },
-    ],
-  },
+  { number: 42, name: "Double Agents: All Stars", year: 2025, competitors: [
+    {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"Big T Fazakerley"},
+    {id:4,name:"Cara Maria Sorbello"},{id:5,name:"CT Tamburello"},{id:6,name:"Darrell Taylor"},
+    {id:7,name:"Derrick Kosinski"},{id:8,name:"Emanuel Neagu"},{id:9,name:"Horacio Gutierrez Jr."},
+    {id:10,name:"Jay Starrett"},{id:11,name:"Jordan Wiseley"},{id:12,name:"Kaycee Clark"},
+    {id:13,name:"Laurel Stucky"},{id:14,name:"Leroy Garrett"},{id:15,name:"Mark Long"},
+    {id:16,name:"Nany Gonzalez"},{id:17,name:"Olivia Kaiser"},{id:18,name:"Rachel Robinson"},
+    {id:19,name:"Tori Deal"},{id:20,name:"Wes Bergmann"},
+  ]},
+  { number: 41, name: "Emergency", year: 2025, competitors: [
+    {id:1,name:"Amber Borzotra"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Berna Canbeldek"},
+    {id:4,name:"Colleen Schneider"},{id:5,name:"CT Tamburello"},{id:6,name:"Devin Walker"},
+    {id:7,name:"Emanuel Neagu"},{id:8,name:"Horacio Gutierrez Jr."},{id:9,name:"Jay Starrett"},
+    {id:10,name:"Josh Martinez"},{id:11,name:"Kaycee Clark"},{id:12,name:"Kyland Young"},
+    {id:13,name:"Laurel Stucky"},{id:14,name:"Michele Fitzgerald"},{id:15,name:"Moriah Jadea"},
+    {id:16,name:"Nany Gonzalez"},{id:17,name:"Nurys Mateo"},{id:18,name:"Olivia Kaiser"},
+    {id:19,name:"Theo Campbell"},{id:20,name:"Tori Deal"},
+  ]},
+  { number: 40, name: "Battle of the Eras", year: 2024, competitors: [
+    {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"Beth Stolarczyk"},
+    {id:4,name:"Big T Fazakerley"},{id:5,name:"Brad Fiorenza"},{id:6,name:"CT Tamburello"},
+    {id:7,name:"Cara Maria Sorbello"},{id:8,name:"Corey Lay"},{id:9,name:"Darrell Taylor"},
+    {id:10,name:"Derrick Kosinski"},{id:11,name:"Derrick Henry"},{id:12,name:"Emmanuel Neagu"},
+    {id:13,name:"Horacio Gutierrez Jr."},{id:14,name:"Jasmine Reynaud"},{id:15,name:"Jay Starrett"},
+    {id:16,name:"Jonna Mannion"},{id:17,name:"Jordan Wiseley"},{id:18,name:"Kaycee Clark"},
+    {id:19,name:"Kenny Clark"},{id:20,name:"Laurel Stucky"},{id:21,name:"Leroy Garrett"},
+    {id:22,name:"Liv Jawando"},{id:23,name:"Mark Long"},{id:24,name:"Melissa Reeves"},
+    {id:25,name:"Michele Fitzgerald"},{id:26,name:"Nany Gonzalez"},{id:27,name:"Olivia Kaiser"},
+    {id:28,name:"Rachel Robinson"},{id:29,name:"Sarah Rice"},{id:30,name:"Susie Meister"},
+    {id:31,name:"Tori Deal"},{id:32,name:"Veronica Portillo"},{id:33,name:"Wes Bergmann"},
+  ]},
+  { number: 39, name: "Battle for a New Champion", year: 2023, competitors: [
+    {id:1,name:"Amber Borzotra"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Berna Canbeldek"},
+    {id:4,name:"Chauncey Palmer"},{id:5,name:"Devin Walker"},{id:6,name:"Emanuel Neagu"},
+    {id:7,name:"Horacio Gutierrez Jr."},{id:8,name:"Jay Starrett"},{id:9,name:"Josh Martinez"},
+    {id:10,name:"Kaycee Clark"},{id:11,name:"Kyland Young"},{id:12,name:"Laurel Stucky"},
+    {id:13,name:"Michele Fitzgerald"},{id:14,name:"Moriah Jadea"},{id:15,name:"Nany Gonzalez"},
+    {id:16,name:"Nurys Mateo"},{id:17,name:"Olivia Kaiser"},{id:18,name:"Ravyn Rochelle"},
+    {id:19,name:"Theo Campbell"},{id:20,name:"Tori Deal"},
+  ]},
+  { number: 38, name: "Ride or Dies", year: 2022, competitors: [
+    {id:1,name:"Amber Borzotra"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Bananas"},
+    {id:4,name:"CT Tamburello"},{id:5,name:"Danny McCray"},{id:6,name:"Devin Walker"},
+    {id:7,name:"Emanuel Neagu"},{id:8,name:"Faysal Shafaat"},{id:9,name:"Jordan Wiseley"},
+    {id:10,name:"Josh Martinez"},{id:11,name:"Kaycee Clark"},{id:12,name:"Laurel Stucky"},
+    {id:13,name:"Nany Gonzalez"},{id:14,name:"Nelson Thomas"},{id:15,name:"Nurys Mateo"},
+    {id:16,name:"Olivia Kaiser"},{id:17,name:"Tori Deal"},{id:18,name:"Veronica Portillo"},
+  ]},
+  { number: 37, name: "Spies, Lies & Allies", year: 2021, competitors: [
+    {id:1,name:"Aneesa Ferreira"},{id:2,name:"Ashley Mitchell"},{id:3,name:"Bananas"},
+    {id:4,name:"Berna Canbeldek"},{id:5,name:"CT Tamburello"},{id:6,name:"Cory Wharton"},
+    {id:7,name:"Devin Walker"},{id:8,name:"Emanuel Neagu"},{id:9,name:"Esther Agunbiade"},
+    {id:10,name:"Fessy Shafaat"},{id:11,name:"Josh Martinez"},{id:12,name:"Kaycee Clark"},
+    {id:13,name:"Kelz Dyke"},{id:14,name:"Kyle Christie"},{id:15,name:"Laurel Stucky"},
+    {id:16,name:"Nany Gonzalez"},{id:17,name:"Nelson Thomas"},{id:18,name:"Priscilla Anyabu"},
+    {id:19,name:"Tori Deal"},{id:20,name:"Tracy Candelas"},
+  ]},
+  { number: 36, name: "Double Agents", year: 2020, competitors: [
+    {id:1,name:"Amber Borzotra"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Bananas"},
+    {id:4,name:"Big T Fazakerley"},{id:5,name:"CT Tamburello"},{id:6,name:"Cory Wharton"},
+    {id:7,name:"Darrell Taylor"},{id:8,name:"Devin Walker"},{id:9,name:"Fessy Shafaat"},
+    {id:10,name:"Jay Starrett"},{id:11,name:"Josh Martinez"},{id:12,name:"Kaycee Clark"},
+    {id:13,name:"Kyle Christie"},{id:14,name:"Leroy Garrett"},{id:15,name:"Lolo Jones"},
+    {id:16,name:"Mechie"},{id:17,name:"Natalie Anderson"},{id:18,name:"Nam Vo"},
+    {id:19,name:"Nany Gonzalez"},{id:20,name:"Nelson Thomas"},{id:21,name:"Nicole Zanatta"},
+    {id:22,name:"Tori Deal"},
+  ]},
+  { number: 35, name: "Total Madness", year: 2020, competitors: [
+    {id:1,name:"Aneesa Ferreira"},{id:2,name:"Asaf Goren"},{id:3,name:"Bananas"},
+    {id:4,name:"Bear"},{id:5,name:"Cory Wharton"},{id:6,name:"CT Tamburello"},
+    {id:7,name:"Dee Nguyen"},{id:8,name:"Fessy Shafaat"},{id:9,name:"Jenna Compono"},
+    {id:10,name:"Jenny West"},{id:11,name:"Josh Martinez"},{id:12,name:"Kaycee Clark"},
+    {id:13,name:"Kyle Christie"},{id:14,name:"Melissa Reeves"},{id:15,name:"Nany Gonzalez"},
+    {id:16,name:"Nelson Thomas"},{id:17,name:"Rogan"},{id:18,name:"Tori Deal"},
+    {id:19,name:"Wes Bergmann"},
+  ]},
+  { number: 34, name: "War of the Worlds 2", year: 2019, competitors: [
+    {id:1,name:"Amanda Garcia"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Ashley Mitchell"},
+    {id:4,name:"Bananas"},{id:5,name:"Bear"},{id:6,name:"CT Tamburello"},
+    {id:7,name:"Cara Maria Sorbello"},{id:8,name:"Cory Wharton"},{id:9,name:"Dee Nguyen"},
+    {id:10,name:"Georgia"},{id:11,name:"Jay"},{id:12,name:"Jordan Wiseley"},
+    {id:13,name:"Josh Martinez"},{id:14,name:"Kayleigh Morris"},{id:15,name:"Kyle Christie"},
+    {id:16,name:"Leroy Garrett"},{id:17,name:"Mattie Lynn Breaux"},{id:18,name:"Nany Gonzalez"},
+    {id:19,name:"Rogan"},{id:20,name:"Tori Deal"},{id:21,name:"Turbo Camkiran"},
+    {id:22,name:"Wes Bergmann"},
+  ]},
+  { number: 33, name: "War of the Worlds", year: 2019, competitors: [
+    {id:1,name:"Amanda Garcia"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Ashley Mitchell"},
+    {id:4,name:"Bananas"},{id:5,name:"Bear"},{id:6,name:"Cara Maria Sorbello"},
+    {id:7,name:"CT Tamburello"},{id:8,name:"Cory Wharton"},{id:9,name:"DaVonne Rogers"},
+    {id:10,name:"Georgia"},{id:11,name:"Hunter Barfield"},{id:12,name:"Kam Williams"},
+    {id:13,name:"Kyle Christie"},{id:14,name:"Leroy Garrett"},{id:15,name:"Morgan St. Pierre"},
+    {id:16,name:"Nany Gonzalez"},{id:17,name:"Ninja Natalie"},{id:18,name:"Paulie Calafiore"},
+    {id:19,name:"Theo Campbell"},{id:20,name:"Tori Deal"},{id:21,name:"Turbo Camkiran"},
+    {id:22,name:"Wes Bergmann"},{id:23,name:"Zach Nichols"},
+  ]},
+  { number: 32, name: "Final Reckoning", year: 2018, competitors: [
+    {id:1,name:"Angela Babicz"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Ashley Mitchell"},
+    {id:4,name:"Bananas"},{id:5,name:"Brad Fiorenza"},{id:6,name:"Britni Thornton"},
+    {id:7,name:"Chuck Mowery"},{id:8,name:"Cory Wharton"},{id:9,name:"Da'Vonne Rogers"},
+    {id:10,name:"Faith Stowers"},{id:11,name:"Hunter Barfield"},{id:12,name:"Joss Mooney"},
+    {id:13,name:"Kam Williams"},{id:14,name:"Kayleigh Morris"},{id:15,name:"Kyle Christie"},
+    {id:16,name:"Natalie Negrotti"},{id:17,name:"Nelson Thomas"},{id:18,name:"Paulie Calafiore"},
+    {id:19,name:"Shane Landrum"},{id:20,name:"Tony Raines"},{id:21,name:"Victor Arroyo"},
+    {id:22,name:"Zach Nichols"},
+  ]},
+  { number: 31, name: "Final Reckoning: Aftermath", year: 2018, competitors: [
+    {id:1,name:"Aneesa Ferreira"},{id:2,name:"Ashley Mitchell"},{id:3,name:"Bananas"},
+    {id:4,name:"Brad Fiorenza"},{id:5,name:"CT Tamburello"},{id:6,name:"Camila Nakagawa"},
+    {id:7,name:"Cara Maria Sorbello"},{id:8,name:"Darrell Taylor"},{id:9,name:"Derrick Kosinski"},
+    {id:10,name:"Jordan Wiseley"},{id:11,name:"Joss Mooney"},{id:12,name:"Kyle Christie"},
+    {id:13,name:"Laurel Stucky"},{id:14,name:"Leroy Garrett"},{id:15,name:"Marie Roda"},
+    {id:16,name:"Natalie Negrotti"},{id:17,name:"Tony Raines"},{id:18,name:"Zach Nichols"},
+  ]},
+  { number: 30, name: "Vendettas", year: 2018, competitors: [
+    {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"Brad Fiorenza"},
+    {id:4,name:"Britni Thornton"},{id:5,name:"CT Tamburello"},{id:6,name:"Cara Maria Sorbello"},
+    {id:7,name:"Jemmye Carroll"},{id:8,name:"Joss Mooney"},{id:9,name:"Kam Williams"},
+    {id:10,name:"Kailah Casillas"},{id:11,name:"Kayleigh Morris"},{id:12,name:"Kyle Christie"},
+    {id:13,name:"Leroy Garrett"},{id:14,name:"Marie Roda"},{id:15,name:"Melissa Reeves"},
+    {id:16,name:"Natalie Negrotti"},{id:17,name:"Nicole Ramos"},{id:18,name:"Tony Raines"},
+    {id:19,name:"Victor Arroyo"},{id:20,name:"Zach Nichols"},
+  ]},
+  { number: 29, name: "Dirty Thirty", year: 2017, competitors: [
+    {id:1,name:"Amanda Garcia"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Ashley Mitchell"},
+    {id:4,name:"Bananas"},{id:5,name:"Brad Fiorenza"},{id:6,name:"Britni Thornton"},
+    {id:7,name:"CT Tamburello"},{id:8,name:"Cara Maria Sorbello"},{id:9,name:"Cory Wharton"},
+    {id:10,name:"Derrick Henry"},{id:11,name:"Hunter Barfield"},{id:12,name:"Jemmye Carroll"},
+    {id:13,name:"Joss Mooney"},{id:14,name:"Kam Williams"},{id:15,name:"Kailah Casillas"},
+    {id:16,name:"Leroy Garrett"},{id:17,name:"Lisette Bustamante"},{id:18,name:"Marie Roda"},
+    {id:19,name:"Nelson Thomas"},{id:20,name:"Nicole Ramos"},{id:21,name:"Tony Raines"},
+    {id:22,name:"Tori Hall"},{id:23,name:"Veronica Portillo"},{id:24,name:"Zach Nichols"},
+  ]},
+  { number: 28, name: "XXX: Dirty Thirty Reunion", year: 2017, competitors: [
+    {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"Brad Fiorenza"},
+    {id:4,name:"CT Tamburello"},{id:5,name:"Cara Maria Sorbello"},{id:6,name:"Derrick Kosinski"},
+    {id:7,name:"Emily Schromm"},{id:8,name:"Evan Starkman"},{id:9,name:"Jemmye Carroll"},
+    {id:10,name:"Jordan Wiseley"},{id:11,name:"Laurel Stucky"},{id:12,name:"Leroy Garrett"},
+    {id:13,name:"Mark Long"},{id:14,name:"Nicole Ramos"},{id:15,name:"Paula Meronek"},
+    {id:16,name:"Sarah Rice"},{id:17,name:"Susie Meister"},{id:18,name:"Wes Bergmann"},
+    {id:19,name:"Zach Nichols"},
+  ]},
+  { number: 27, name: "Invasion of the Champions", year: 2017, competitors: [
+    {id:1,name:"Amanda Garcia"},{id:2,name:"Ashley Cain"},{id:3,name:"Bananas"},
+    {id:4,name:"Cara Maria Sorbello"},{id:5,name:"Cory Wharton"},{id:6,name:"CT Tamburello"},
+    {id:7,name:"Hunter Barfield"},{id:8,name:"Jemmye Carroll"},{id:9,name:"Johnny Reilly"},
+    {id:10,name:"Kailah Casillas"},{id:11,name:"Laurel Stucky"},{id:12,name:"LaToya Jackson"},
+    {id:13,name:"Nelson Thomas"},{id:14,name:"Nicole Ramos"},{id:15,name:"Theo Campbell"},
+    {id:16,name:"Tony Raines"},
+  ]},
+  { number: 26, name: "Rivals III", year: 2016, competitors: [
+    {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"Camila Nakagawa"},
+    {id:4,name:"Cara Maria Sorbello"},{id:5,name:"CT Tamburello"},{id:6,name:"Dario Medrano"},
+    {id:7,name:"Devin Walker"},{id:8,name:"Jenna Compono"},{id:9,name:"Johnny Reilly"},
+    {id:10,name:"Jordan Wiseley"},{id:11,name:"Kayleigh Morris"},{id:12,name:"Leroy Garrett"},
+    {id:13,name:"Nany Gonzalez"},{id:14,name:"Natalie Negrotti"},{id:15,name:"Nicole Zanatta"},
+    {id:16,name:"Sarah Rice"},{id:17,name:"Tony Raines"},{id:18,name:"Wes Bergmann"},
+    {id:19,name:"Zach Nichols"},
+  ]},
+  { number: 25, name: "Bloodlines", year: 2015, competitors: [
+    {id:1,name:"Abram Boise"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Bananas"},
+    {id:4,name:"Cara Maria Sorbello"},{id:5,name:"CT Tamburello"},{id:6,name:"Camila Nakagawa"},
+    {id:7,name:"Cory Wharton"},{id:8,name:"Dario Medrano"},{id:9,name:"Jamie Banks"},
+    {id:10,name:"Jessica McCain"},{id:11,name:"Johnny Reilly"},{id:12,name:"Jenna Compono"},
+    {id:13,name:"Katie Cooley"},{id:14,name:"Kellyanne Judd"},{id:15,name:"Larissa Trownson"},
+    {id:16,name:"Leroy Garrett"},{id:17,name:"Mike Ross"},{id:18,name:"Nany Gonzalez"},
+    {id:19,name:"Shane Landrum"},{id:20,name:"Thomas Buell"},{id:21,name:"Tony Raines"},
+  ]},
+  { number: 24, name: "Battle of the Exes II", year: 2015, competitors: [
+    {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"CT Tamburello"},
+    {id:4,name:"Cara Maria Sorbello"},{id:5,name:"Diem Brown"},{id:6,name:"Jay Mitchell"},
+    {id:7,name:"Jenna Compono"},{id:8,name:"Jessica McCain"},{id:9,name:"Jordan Wiseley"},
+    {id:10,name:"Leroy Garrett"},{id:11,name:"Nany Gonzalez"},{id:12,name:"Reilly"},
+    {id:13,name:"Sarah Rice"},{id:14,name:"Thomas Buell"},{id:15,name:"Wes Bergmann"},
+    {id:16,name:"Zach Nichols"},
+  ]},
+  { number: 23, name: "Free Agents", year: 2014, competitors: [
+    {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"CT Tamburello"},
+    {id:4,name:"Camila Nakagawa"},{id:5,name:"Cara Maria Sorbello"},{id:6,name:"Cooke"},
+    {id:7,name:"Devyn Simone"},{id:8,name:"Diem Brown"},{id:9,name:"Dunbar Merrill"},
+    {id:10,name:"Isaac Stout"},{id:11,name:"Jasmine Reynaud"},{id:12,name:"Jay Mitchell"},
+    {id:13,name:"Jordan Wiseley"},{id:14,name:"Laurel Stucky"},{id:15,name:"Leroy Garrett"},
+    {id:16,name:"LaToya Jackson"},{id:17,name:"Nany Gonzalez"},{id:18,name:"Reilly"},
+    {id:19,name:"Theresa Gonzalez"},{id:20,name:"Zach Nichols"},
+  ]},
+  { number: 22, name: "Rivals II", year: 2013, competitors: [
+    {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"CT Tamburello"},
+    {id:4,name:"Camila Nakagawa"},{id:5,name:"Cara Maria Sorbello"},{id:6,name:"Cooke"},
+    {id:7,name:"Diem Brown"},{id:8,name:"Emily Schromm"},{id:9,name:"Jemmye Carroll"},
+    {id:10,name:"Jonna Mannion"},{id:11,name:"Jordan Wiseley"},{id:12,name:"Leroy Garrett"},
+    {id:13,name:"Marlon Williams"},{id:14,name:"Nany Gonzalez"},{id:15,name:"Paula Meronek"},
+    {id:16,name:"Sarah Rice"},{id:17,name:"Theresa Gonzalez"},{id:18,name:"Trishelle Cannatella"},
+    {id:19,name:"Ty Ruff"},{id:20,name:"Wes Bergmann"},
+  ]},
+  { number: 21, name: "Battle of the Seasons", year: 2012, competitors: [
+    {id:1,name:"Alton Williams"},{id:2,name:"Austin Cindy"},{id:3,name:"Bananas"},
+    {id:4,name:"Big Easy"},{id:5,name:"Brooklyn CJ"},{id:6,name:"Camila Nakagawa"},
+    {id:7,name:"Derek Chavez"},{id:8,name:"Dustin Zito"},{id:9,name:"Frank Sweeney"},
+    {id:10,name:"Heather Cooke"},{id:11,name:"Jemmye Carroll"},{id:12,name:"Lacey"},{id:13,name:"Laura"},
+    {id:14,name:"Melaney Arpino"},{id:15,name:"Nany Gonzalez"},{id:16,name:"Preston Roberson-Charles"},
+    {id:17,name:"Sam"},{id:18,name:"Sarah Rice"},{id:19,name:"Trishelle Cannatella"},
+    {id:20,name:"Wes Bergmann"},
+  ]},
+  { number: 20, name: "Battle of the Exes", year: 2012, competitors: [
+    {id:1,name:"Abram Boise"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Bananas"},
+    {id:4,name:"CT Tamburello"},{id:5,name:"Cara Maria Sorbello"},{id:6,name:"Camila Nakagawa"},
+    {id:7,name:"Diem Brown"},{id:8,name:"Emily Schromm"},{id:9,name:"Jasmine Reynaud"},
+    {id:10,name:"Jonna Mannion"},{id:11,name:"Mark Long"},{id:12,name:"Nany Gonzalez"},
+    {id:13,name:"Paula Meronek"},{id:14,name:"Robin Hibbard"},{id:15,name:"Sarah Rice"},
+    {id:16,name:"Ty Ruff"},
+  ]},
+  { number: 19, name: "Rivals", year: 2011, competitors: [
+    {id:1,name:"Adam Royer"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Bananas"},
+    {id:4,name:"Brandon"},{id:5,name:"CT Tamburello"},{id:6,name:"Cara Maria Sorbello"},
+    {id:7,name:"Camila Nakagawa"},{id:8,name:"Davis Mallory"},{id:9,name:"Evan Starkman"},
+    {id:10,name:"Jasmine Reynaud"},{id:11,name:"Jenn Grijalva"},{id:12,name:"Jonna Mannion"},
+    {id:13,name:"Laurel Stucky"},{id:14,name:"Leroy Garrett"},{id:15,name:"Mike Ross"},
+    {id:16,name:"Paula Meronek"},{id:17,name:"Theresa Gonzalez"},{id:18,name:"Ty Ruff"},
+    {id:19,name:"Wes Bergmann"},
+  ]},
+  { number: 18, name: "Cutthroat", year: 2010, competitors: [
+    {id:1,name:"Abram Boise"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Bananas"},
+    {id:4,name:"Brandon"},{id:5,name:"Cara Maria Sorbello"},{id:6,name:"CT Tamburello"},
+    {id:7,name:"Emily Schromm"},{id:8,name:"Eric Banks"},{id:9,name:"Gray"},
+    {id:10,name:"Jenn Grijalva"},{id:11,name:"Jillian Zoboroski"},{id:12,name:"Katelynn Cusanelli"},
+    {id:13,name:"Laurel Stucky"},{id:14,name:"Luke Wolfe"},{id:15,name:"Paula Meronek"},
+    {id:16,name:"Theresa Gonzalez"},{id:17,name:"Tina Bridges"},{id:18,name:"Tyler Duckworth"},
+  ]},
+  { number: 17, name: "Fresh Meat II", year: 2010, competitors: [
+    {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"Cara Maria Sorbello"},
+    {id:4,name:"CJ Koegel"},{id:5,name:"Danny Jamieson"},{id:6,name:"Evelyn Smith"},
+    {id:7,name:"Jeff Grenell"},{id:8,name:"Jillian Zoboroski"},{id:9,name:"Kenny Clark"},
+    {id:10,name:"Landon Lueck"},{id:11,name:"Laurel Stucky"},{id:12,name:"Luke Wolfe"},
+    {id:13,name:"Pete Connelly"},{id:14,name:"Ryan Kehoe"},
+    {id:15,name:"Sandy Kang"},{id:16,name:"Theresa Gonzalez"},{id:17,name:"Wes Bergmann"},
+  ]},
+  { number: 16, name: "The Ruins", year: 2009, competitors: [
+    {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"Brad Fiorenza"},
+    {id:4,name:"Brianna"},{id:5,name:"Cohutta Grindstaff"},{id:6,name:"Craig"}  ,
+    {id:7,name:"Danny Jamieson"},{id:8,name:"Dunbar Merrill"},{id:9,name:"Evan Starkman"},
+    {id:10,name:"Ibis"},{id:11,name:"Johanna Botta"},{id:12,name:"KellyAnne Judd"},
+    {id:13,name:"Kenny Clark"},{id:14,name:"Kim"},{id:15,name:"Mahlia"},
+    {id:16,name:"Nick"},{id:17,name:"Sarah Rice"},{id:18,name:"Susie Meister"},
+    {id:19,name:"Theresa Gonzalez"},{id:20,name:"Tonya Cooley"},{id:21,name:"Wes Bergmann"},
+  ]},
+  { number: 15, name: "The Island", year: 2008, competitors: [
+    {id:1,name:"Bananas"},{id:2,name:"Cohutta Grindstaff"},{id:3,name:"Dan"},{id:4,name:"Danny Jamieson"},
+    {id:5,name:"Derek Chavez"},{id:6,name:"Dunbar Merrill"},{id:7,name:"Evelyn Smith"},
+    {id:8,name:"Ibis"},{id:9,name:"Johanna Botta"},{id:10,name:"KellyAnne Judd"},
+    {id:11,name:"Kenny Clark"},{id:12,name:"Kim"},{id:13,name:"Paula Meronek"},
+    {id:14,name:"Reva"},{id:15,name:"Robin Hibbard"},{id:16,name:"Shauvon Torres"},
+    {id:17,name:"Tina Bridges"},{id:18,name:"Tonya Cooley"},
+  ]},
+  { number: 14, name: "The Duel II", year: 2009, competitors: [
+    {id:1,name:"Aneesa Ferreira"},{id:2,name:"Aviv Melmed"},{id:3,name:"Brittini"},
+    {id:4,name:"Cara Maria Sorbello"},{id:5,name:"CT Tamburello"},{id:6,name:"Davis Mallory"},
+    {id:7,name:"Evan Starkman"},{id:8,name:"Isaac Stout"},{id:9,name:"Kenny Clark"},
+    {id:10,name:"Mark Long"},{id:11,name:"Noor"},{id:12,name:"Paula Meronek"},
+    {id:13,name:"Rachel Robinson"},{id:14,name:"Ruthie Alcaide"},{id:15,name:"Tori Hall"},
+  ]},
+  { number: 13, name: "The Gauntlet III", year: 2008, competitors: [
+    {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"Brad Fiorenza"},
+    {id:4,name:"CT Tamburello"},{id:5,name:"Danny Jamieson"},{id:6,name:"Evan Starkman"},
+    {id:7,name:"Frank"},{id:8,name:"Johanna Botta"},{id:9,name:"Katie Cooley"},
+    {id:10,name:"Kenny Clark"},{id:11,name:"Kristina"},{id:12,name:"Melinda Martin"},
+    {id:13,name:"Paula Meronek"},{id:14,name:"Robin Hibbard"},{id:15,name:"Ryan Kehoe"},
+    {id:16,name:"Tonya Cooley"},{id:17,name:"Tori Hall"},
+  ]},
+  { number: 12, name: "The Inferno III", year: 2007, competitors: [
+    {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"Brad Fiorenza"},
+    {id:4,name:"CT Tamburello"},{id:5,name:"Casey Cooper"},{id:6,name:"Danny Jamieson"},
+    {id:7,name:"Davis Mallory"},{id:8,name:"Derek Chavez"},{id:9,name:"Evan Starkman"},
+    {id:10,name:"Jodi Weatherton"},{id:11,name:"Johanna Botta"},{id:12,name:"Kenny Clark"},
+    {id:13,name:"Kina Dean"},{id:14,name:"Landon Lueck"},{id:15,name:"Paula Meronek"},
+    {id:16,name:"Robin Hibbard"},{id:17,name:"Ryan Kehoe"},{id:18,name:"Timmy Beggy"},
+    {id:19,name:"Tonya Cooley"},{id:20,name:"Trishelle Cannatella"},{id:21,name:"Tyrie Ballard"},
+  ]},
+  { number: 11, name: "Fresh Meat", year: 2006, competitors: [
+    {id:1,name:"Ace Amerson"},{id:2,name:"Aviv Melmed"},{id:3,name:"Coral Smith"},
+    {id:4,name:"Darrell Taylor"},{id:5,name:"Derrick Kosinski"},{id:6,name:"Eric Banks"},
+    {id:7,name:"Evan Starkman"},{id:8,name:"Evelyn Smith"},{id:9,name:"Jesse Sulidis"},
+    {id:10,name:"Johanna Botta"},{id:11,name:"Kenny Clark"},{id:12,name:"Linette"},
+    {id:13,name:"Melinda Martin"},{id:14,name:"Ryan Kehoe"},{id:15,name:"Tina Bridges"},
+    {id:16,name:"Tonya Cooley"},
+  ]},
+  { number: 10, name: "The Duel", year: 2006, competitors: [
+    {id:1,name:"Aneesa Ferreira"},{id:2,name:"Aviv Melmed"},{id:3,name:"Brad Fiorenza"},
+    {id:4,name:"Cara Zavaleta"},{id:5,name:"CT Tamburello"},{id:6,name:"Derrick Kosinski"},
+    {id:7,name:"Evan Starkman"},{id:8,name:"Jodi Weatherton"},{id:9,name:"Johanna Botta"},
+    {id:10,name:"Katie Cooley"},{id:11,name:"Kenny Clark"},{id:12,name:"Mark Long"},
+    {id:13,name:"Randy Barry"},{id:14,name:"Svetlana Shusterman"},{id:15,name:"Wetsy"},
+    {id:16,name:"Wes Bergmann"},
+  ]},
+  { number: 9, name: "The Gauntlet II", year: 2005, competitors: [
+    {id:1,name:"Alton Williams"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Bananas"},
+    {id:4,name:"Brad Fiorenza"},{id:5,name:"CT Tamburello"},{id:6,name:"Derrick Kosinski"},
+    {id:7,name:"Jamie Banks"},{id:8,name:"Jillian Zoboroski"},{id:9,name:"Julie Stoffer"},
+    {id:10,name:"Landon Lueck"},{id:11,name:"Mark Long"},{id:12,name:"Rachel Robinson"},
+    {id:13,name:"Robin Hibbard"},{id:14,name:"Ruthie Alcaide"},{id:15,name:"Susie Meister"},
+    {id:16,name:"Timmy Beggy"},
+  ]},
+  { number: 8, name: "The Inferno II", year: 2005, competitors: [
+    {id:1,name:"Abram Boise"},{id:2,name:"Alton Williams"},{id:3,name:"Aneesa Ferreira"},
+    {id:4,name:"CT Tamburello"},{id:5,name:"Cara Zavaleta"},{id:6,name:"Darrell Taylor"},
+    {id:7,name:"Derrick Kosinski"},{id:8,name:"Jamie Banks"},{id:9,name:"Jodi Weatherton"},
+    {id:10,name:"Julie Stoffer"},{id:11,name:"Karamo Brown"},{id:12,name:"Landon Lueck"},
+    {id:13,name:"Mardi"},{id:14,name:"Mike Ross"},{id:15,name:"Timmy Beggy"},
+    {id:16,name:"Tonya Cooley"},
+  ]},
+  { number: 7, name: "Battle of the Sexes 2", year: 2004, competitors: [
+    {id:1,name:"Abram Boise"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Brad Fiorenza"},
+    {id:4,name:"Coral Smith"},{id:5,name:"CT Tamburello"},{id:6,name:"Dan"},{id:7,name:"Darrell Taylor"},
+    {id:8,name:"Ibis"},{id:9,name:"Jamie Banks"},{id:10,name:"Janelle"},
+    {id:11,name:"Jeremy Donaldson"},{id:12,name:"Julie Stoffer"},{id:13,name:"Katie Cooley"},
+    {id:14,name:"Mark Long"},{id:15,name:"Mike Ross"},{id:16,name:"Rachel Robinson"},
+    {id:17,name:"Robin Hibbard"},{id:18,name:"Steven Hill"},{id:19,name:"Timmy Beggy"},
+    {id:20,name:"Tonya Cooley"},
+  ]},
+  { number: 6, name: "The Inferno", year: 2003, competitors: [
+    {id:1,name:"Abram Boise"},{id:2,name:"Alton Williams"},{id:3,name:"CT Tamburello"},
+    {id:4,name:"Coral Smith"},{id:5,name:"Darrell Taylor"},{id:6,name:"Jonny Fairplay"},
+    {id:7,name:"Julie Stoffer"},{id:8,name:"Katie Cooley"},{id:9,name:"Leah Gillingwater"},
+    {id:10,name:"Mark Long"},{id:11,name:"Mike Ross"},{id:12,name:"Rachel Robinson"},
+    {id:13,name:"Ruthie Alcaide"},{id:14,name:"Shane Landrum"},{id:15,name:"Timmy Beggy"},
+    {id:16,name:"Trishelle Cannatella"},
+  ]},
+  { number: 5, name: "The Gauntlet", year: 2003, competitors: [
+    {id:1,name:"Adam Larson"},{id:2,name:"Alton Williams"},{id:3,name:"Coral Smith"},
+    {id:4,name:"CT Tamburello"},{id:5,name:"Darrell Taylor"},{id:6,name:"Elka Brand"},
+    {id:7,name:"Irulan Wilson"},{id:8,name:"Jamie Banks"},{id:9,name:"Jonny Fairplay"},
+    {id:10,name:"Julie Stoffer"},{id:11,name:"Katie Cooley"},{id:12,name:"Mark Long"},
+    {id:13,name:"Mike Ross"},{id:14,name:"Nathan Moore"},{id:15,name:"Rachel Robinson"},
+    {id:16,name:"Trishelle Cannatella"},
+  ]},
+  { number: 4, name: "Battle of the Sexes", year: 2002, competitors: [
+    {id:1,name:"Antoine"},{id:2,name:"Blair Herter"},{id:3,name:"Coral Smith"},
+    {id:4,name:"Dan"},{id:5,name:"Darrell Taylor"},{id:6,name:"Emily Bailey"},
+    {id:7,name:"Eric Banks"},{id:8,name:"Genesis"},{id:9,name:"Gladys"},
+    {id:10,name:"Jake Bronstein"},{id:11,name:"James"},{id:12,name:"Jamie Banks"},
+    {id:13,name:"Jeremy Donaldson"},{id:14,name:"Julie Stoffer"},{id:15,name:"Karen"},
+    {id:16,name:"Lori Trespicio"},{id:17,name:"Mark Long"},{id:18,name:"Mike Ross"},
+    {id:19,name:"Melissa Wu"},{id:20,name:"Rachel Robinson"},{id:21,name:"Ruth Alcaide"},
+    {id:22,name:"Shane Landrum"},{id:23,name:"Timmy Beggy"},
+  ]},
+  { number: 3, name: "Challenge 2000", year: 2000, competitors: [
+    {id:1,name:"Amaya Brecher"},{id:2,name:"Colin Mortensen"},{id:3,name:"Coral Smith"},
+    {id:4,name:"Dan"},{id:5,name:"Elka Brand"},{id:6,name:"James"},{id:7,name:"Jamie Banks"},
+    {id:8,name:"Kameelah Phillips"},{id:9,name:"Kelefah"},{id:10,name:"Laterrian Wallace"},
+    {id:11,name:"Lori Trespicio"},{id:12,name:"Mark Long"},{id:13,name:"Mike Ross"},
+    {id:14,name:"Puck"},{id:15,name:"Ruthie Alcaide"},{id:16,name:"Timmy Beggy"},
+    {id:17,name:"Trishelle Cannatella"},
+  ]},
+  { number: 2, name: "Road Rules: All Stars", year: 1998, competitors: [
+    {id:1,name:"Christian Shaffer"},{id:2,name:"Dan"},{id:3,name:"Elka Brand"},
+    {id:4,name:"Holly"},{id:5,name:"James"},{id:6,name:"James Wilder"},
+    {id:7,name:"Janet Zampieri"},{id:8,name:"Jason Defner"},{id:9,name:"Kameelah Phillips"},
+    {id:10,name:"Kelefah"},{id:11,name:"Marc Webb"},{id:12,name:"Mark Long"},
+    {id:13,name:"Mike Ross"},{id:14,name:"Nathan Moore"},{id:15,name:"Puck"},
+    {id:16,name:"Ruthie Alcaide"},{id:17,name:"Sharon"},
+  ]},
+  { number: 1, name: "Road Rules: All Stars", year: 1998, competitors: [
+    {id:1,name:"Dan"},{id:2,name:"Elka Brand"},{id:3,name:"James"},{id:4,name:"Janet Zampieri"},
+    {id:5,name:"Jason Defner"},{id:6,name:"Kameelah Phillips"},{id:7,name:"Marc Webb"},
+    {id:8,name:"Mark Long"},{id:9,name:"Nathan Moore"},{id:10,name:"Puck"},
+    {id:11,name:"Ruthie Alcaide"},{id:12,name:"Sharon"},
+  ]},
 ];
 
 // ─── DB helpers ────────────────────────────────────────────────────────────────
@@ -131,7 +407,7 @@ const db = {
     return sb("challenge_active_season?id=eq.1", "PATCH", { ...data, updated_at: new Date().toISOString() });
   },
   async getPlayers() {
-    return sb("challenge_active_players?order=name.asc") || [];
+    return (await sb("challenge_active_players?order=name.asc")) || [];
   },
   async upsertPlayer(player) {
     return sb("challenge_active_players", "POST", player, { Prefer: "resolution=merge-duplicates,return=representation" });
@@ -144,19 +420,16 @@ const db = {
     return sb(`challenge_active_players?id=eq.${id}`, "DELETE");
   },
   async getEvents() {
-    return sb("challenge_active_events?order=episode.asc,created_at.asc") || [];
+    return (await sb("challenge_active_events?order=episode.asc,created_at.asc")) || [];
   },
   async insertEvent(event) {
     return sb("challenge_active_events", "POST", event);
-  },
-  async deleteEvent(id) {
-    return sb(`challenge_active_events?id=eq.${id}`, "DELETE");
   },
   async deleteEpisodeEvents(episode) {
     return sb(`challenge_active_events?episode=eq.${episode}`, "DELETE");
   },
   async getSavedSeasons() {
-    return sb("challenge_saved_seasons?order=season_year.desc") || [];
+    return (await sb("challenge_saved_seasons?order=season_year.desc")) || [];
   },
   async saveSeasonRecord(data) {
     return sb("challenge_saved_seasons", "POST", data);
@@ -165,7 +438,7 @@ const db = {
     return sb("challenge_season_results", "POST", data);
   },
   async getResultsForSeason(seasonId) {
-    return sb(`challenge_season_results?saved_season_id=eq.${seasonId}&order=finish_position.asc`) || [];
+    return (await sb(`challenge_season_results?saved_season_id=eq.${seasonId}&order=finish_position.asc`)) || [];
   },
   async deleteSavedSeason(id) {
     return sb(`challenge_saved_seasons?id=eq.${id}`, "DELETE");
@@ -174,8 +447,8 @@ const db = {
     return sb(`challenge_season_results?saved_season_id=eq.${savedSeasonId}`, "DELETE");
   },
   async clearActiveSeason() {
-    await sb("challenge_active_events", "DELETE", null, { Prefer: "return=minimal" });
-    await sb("challenge_active_players", "DELETE", null, { Prefer: "return=minimal" });
+    await sb("challenge_active_events?episode=gte.0", "DELETE");
+    await sb("challenge_active_players?name=neq.__placeholder__", "DELETE");
     return sb("challenge_active_season?id=eq.1", "PATCH", {
       season_number: null,
       season_name: null,
@@ -186,43 +459,37 @@ const db = {
 };
 
 // ─── Scoring engine ────────────────────────────────────────────────────────────
+// Points floor at 0 — never go negative from episode scoring
+// Buyback −10 is handled separately as a player-level deduction
 function scoreEpisode(pl, ep, previouslyEliminatedIds = []) {
   const pts = [];
   const allElim = new Set([
     ...previouslyEliminatedIds.map(Number),
     ...ep.eliminationLosers.map(Number),
   ]);
+  // Wildcard = 2x, but only if NOT a buyback replacement
   const isWildcard = (id) => pl.wildcard_pick === id && pl.buyback_competitor !== id;
   const mult = (id) => isWildcard(id) ? 2 : 1;
 
   const picks = [pl.winner_pick, pl.wildcard_pick].filter(Boolean);
 
   for (const cid of picks) {
-    if (allElim.has(Number(cid))) continue; // eliminated — no points
-
+    if (allElim.has(Number(cid))) continue;
     const m = mult(cid);
     const label = isWildcard(cid) ? "Wildcard" : "Winner Pick";
-
-    // Daily challenge win
     if (ep.dailyWinners.map(Number).includes(Number(cid))) {
       pts.push({ label: `${label} Daily Win`, points: 1 * m });
     }
-
-    // Elimination win
     if (ep.eliminationWinners.map(Number).includes(Number(cid))) {
       pts.push({ label: `${label} Elim Win`, points: 3 * m });
     }
   }
 
-  // Buyback penalty
-  if (ep.buybackPenalties?.includes(pl.id)) {
-    pts.push({ label: "Buyback Penalty", points: -10 });
-  }
-
-  return pts;
+  const total = pts.reduce((s, p) => s + p.points, 0);
+  return { items: pts, total: Math.max(0, total) }; // floor at 0
 }
 
-// ─── Multi-select component ───────────────────────────────────────────────────
+// ─── Multi-select ─────────────────────────────────────────────────────────────
 function MultiSelect({ options, selected, onChange, placeholder = "Select..." }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -251,34 +518,21 @@ function MultiSelect({ options, selected, onChange, placeholder = "Select..." })
       <div
         onClick={() => setOpen(!open)}
         style={{
-          background: "#1e2433",
-          border: "1px solid #e50000",
-          borderRadius: 8,
-          padding: "10px 12px",
-          cursor: "pointer",
-          color: labels.length ? "#fff" : "#64748b",
-          fontSize: 14,
-          minHeight: 42,
+          background: "#1a0000", border: "1px solid #e50000", borderRadius: 8,
+          padding: "10px 12px", cursor: "pointer",
+          color: labels.length ? "#fff" : "#64748b", fontSize: 14, minHeight: 42,
+          userSelect: "none",
         }}
       >
         {labels.length ? labels.join(", ") : placeholder}
         <span style={{ float: "right", marginLeft: 8 }}>▾</span>
       </div>
       {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "calc(100% + 4px)",
-            left: 0,
-            right: 0,
-            background: "#1e2433",
-            border: "1px solid #e50000",
-            borderRadius: 8,
-            zIndex: 100,
-            maxHeight: 220,
-            overflowY: "auto",
-          }}
-        >
+        <div style={{
+          position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0,
+          background: "#1a0000", border: "1px solid #e50000", borderRadius: 8,
+          zIndex: 100, maxHeight: 240, overflowY: "auto",
+        }}>
           {options.map((o) => {
             const checked = selected.map(Number).includes(Number(o.id));
             return (
@@ -286,22 +540,17 @@ function MultiSelect({ options, selected, onChange, placeholder = "Select..." })
                 key={o.id}
                 onClick={() => toggle(o.id)}
                 style={{
-                  padding: "10px 14px",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  background: checked ? "#2d1a1a" : "transparent",
+                  padding: "10px 14px", cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 10,
+                  background: checked ? "#2d0000" : "transparent",
                   color: checked ? "#e50000" : "#e2e8f0",
-                  fontSize: 14,
-                  borderBottom: "1px solid #2a2f3e",
+                  fontSize: 14, borderBottom: "1px solid #2a0000",
                 }}
               >
                 <span style={{
                   width: 16, height: 16, border: "2px solid #e50000",
                   borderRadius: 3, background: checked ? "#e50000" : "transparent",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                 }}>
                   {checked && <span style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>✓</span>}
                 </span>
@@ -324,148 +573,73 @@ const S = {
     fontFamily: "'Helvetica Neue', Arial, sans-serif",
     maxWidth: 480,
     margin: "0 auto",
-    padding: "0 0 80px 0",
+    paddingBottom: 80,
   },
   header: {
-    background: "linear-gradient(180deg, #1a0000 0%, #0d0d0d 100%)",
+    background: "#000",
     borderBottom: "3px solid #e50000",
-    padding: "16px 20px 12px",
     textAlign: "center",
-  },
-  logoText: {
-    fontSize: 22,
-    fontWeight: 900,
-    color: "#e50000",
-    letterSpacing: 2,
-    textTransform: "uppercase",
-  },
-  logoSub: {
-    fontSize: 11,
-    color: "#888",
-    letterSpacing: 3,
-    textTransform: "uppercase",
-    marginTop: 2,
+    overflow: "hidden",
   },
   nav: {
-    display: "flex",
-    gap: 8,
-    padding: "8px 20px",
-    background: "#1a0000",
-    justifyContent: "center",
-    borderBottom: "1px solid #2a0000",
+    display: "flex", gap: 8, padding: "8px 12px",
+    background: "#100000", justifyContent: "center",
+    borderBottom: "1px solid #2a0000", flexWrap: "wrap",
   },
   navBtn: (active) => ({
-    padding: "6px 14px",
-    borderRadius: 20,
-    border: "none",
-    cursor: "pointer",
-    fontSize: 13,
-    fontWeight: 600,
+    padding: "6px 14px", borderRadius: 20, border: "none", cursor: "pointer",
+    fontSize: 13, fontWeight: 700,
     background: active ? "#e50000" : "transparent",
     color: active ? "#fff" : "#888",
   }),
   card: {
-    background: "#111",
-    border: "1px solid #2a0000",
-    borderRadius: 12,
-    padding: 16,
-    margin: "12px 16px",
+    background: "#111", border: "1px solid #2a0000",
+    borderRadius: 12, padding: 16, margin: "12px 16px",
   },
   btn: (variant = "primary") => ({
-    display: "block",
-    width: "100%",
-    padding: "12px 16px",
-    borderRadius: 10,
-    border: "none",
-    cursor: "pointer",
-    fontSize: 15,
-    fontWeight: 700,
+    display: "block", width: "100%", padding: "12px 16px",
+    borderRadius: 10, border: variant === "ghost" ? "1px solid #333" : "none",
+    cursor: "pointer", fontSize: 15, fontWeight: 700,
     background: variant === "primary" ? "#e50000"
       : variant === "danger" ? "#7f1d1d"
       : variant === "ghost" ? "transparent"
       : "#1e2433",
     color: variant === "ghost" ? "#888" : "#fff",
-    marginTop: 8,
-    textAlign: "center",
-    border: variant === "ghost" ? "1px solid #2a2f3e" : "none",
+    marginTop: 8, textAlign: "center",
   }),
   input: {
-    width: "100%",
-    background: "#1e2433",
-    border: "1px solid #e50000",
-    borderRadius: 8,
-    padding: "10px 12px",
-    color: "#e2e8f0",
-    fontSize: 14,
-    outline: "none",
-    boxSizing: "border-box",
+    width: "100%", background: "#1a0000", border: "1px solid #e50000",
+    borderRadius: 8, padding: "10px 12px", color: "#e2e8f0",
+    fontSize: 14, outline: "none", boxSizing: "border-box",
   },
   label: {
-    display: "block",
-    fontSize: 12,
-    color: "#e50000",
-    fontWeight: 700,
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    marginBottom: 4,
-    marginTop: 12,
+    display: "block", fontSize: 12, color: "#e50000", fontWeight: 700,
+    letterSpacing: 1, textTransform: "uppercase", marginBottom: 4, marginTop: 12,
   },
   select: {
-    width: "100%",
-    background: "#1e2433",
-    border: "1px solid #e50000",
-    borderRadius: 8,
-    padding: "10px 12px",
-    color: "#e2e8f0",
-    fontSize: 14,
-    outline: "none",
-    boxSizing: "border-box",
+    width: "100%", background: "#1a0000", border: "1px solid #e50000",
+    borderRadius: 8, padding: "10px 12px", color: "#e2e8f0",
+    fontSize: 14, outline: "none", boxSizing: "border-box",
   },
-  badge: (type) => ({
-    display: "inline-block",
-    padding: "2px 8px",
-    borderRadius: 12,
-    fontSize: 11,
-    fontWeight: 700,
-    background: type === "winner" ? "#e50000"
-      : type === "wildcard" ? "#fbbf24"
-      : type === "penalty" ? "#7f1d1d"
-      : "#1e2433",
-    color: type === "wildcard" ? "#000" : "#fff",
-    marginLeft: 4,
-  }),
 };
 
 // ─── Episode modal ─────────────────────────────────────────────────────────────
-function EpisodeModal({ season, players, previouslyEliminated, existingEpisode, onClose, onSave }) {
-  const epNum = existingEpisode
-    ? existingEpisode.episode
-    : (players[0]?._maxEpisode || 0) + 1;
+function EpisodeModal({ season, players, previouslyEliminated, existingEpisode, nextEpNum, onClose, onSave }) {
+  const epNum = existingEpisode ? existingEpisode.episode : nextEpNum;
 
-  const activeComps = season.competitors.filter(
-    (c) => !previouslyEliminated.map(Number).includes(Number(c.id))
-  );
+  // Active competitors = those NOT in the persistent eliminated list
+  // When editing, allow all competitors so mistakes can be corrected
+  const activeComps = existingEpisode
+    ? season.competitors.slice().sort((a, b) => a.name.localeCompare(b.name))
+    : season.competitors
+        .filter((c) => !previouslyEliminated.map(Number).includes(Number(c.id)))
+        .sort((a, b) => a.name.localeCompare(b.name));
 
-  const [dailyWinners, setDailyWinners] = useState(
-    existingEpisode?.dailyWinners || []
-  );
-  const [elimWinners, setElimWinners] = useState(
-    existingEpisode?.eliminationWinners || []
-  );
-  const [elimLosers, setElimLosers] = useState(
-    existingEpisode?.eliminationLosers || []
-  );
-  const [buybackPlayers, setBuybackPlayers] = useState(
-    existingEpisode?.buybackPenalties || []
-  );
+  const [dailyWinners, setDailyWinners] = useState(existingEpisode?.dailyWinners || []);
+  const [elimWinners, setElimWinners] = useState(existingEpisode?.eliminationWinners || []);
+  const [elimLosers, setElimLosers] = useState(existingEpisode?.eliminationLosers || []);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
-  const toggleBuyback = (pid) => {
-    setBuybackPlayers((prev) =>
-      prev.includes(pid) ? prev.filter((x) => x !== pid) : [...prev, pid]
-    );
-  };
 
   async function handleSave() {
     setSaving(true);
@@ -476,7 +650,6 @@ function EpisodeModal({ season, players, previouslyEliminated, existingEpisode, 
         dailyWinners: dailyWinners.map(Number),
         eliminationWinners: elimWinners.map(Number),
         eliminationLosers: elimLosers.map(Number),
-        buybackPenalties: buybackPlayers,
       });
     } catch (e) {
       setError(e.message);
@@ -486,7 +659,7 @@ function EpisodeModal({ season, players, previouslyEliminated, existingEpisode, 
 
   return (
     <div style={{
-      position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)",
+      position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)",
       zIndex: 200, overflowY: "auto", padding: "20px 16px",
     }}>
       <div style={{
@@ -497,60 +670,20 @@ function EpisodeModal({ season, players, previouslyEliminated, existingEpisode, 
           {existingEpisode ? "Edit" : "Score"} Episode {epNum}
         </h2>
 
-        <label style={S.label}>Daily Challenge Winners (multi-select)</label>
-        <MultiSelect
-          options={activeComps}
-          selected={dailyWinners}
-          onChange={setDailyWinners}
-          placeholder="No daily winners"
-        />
+        <label style={S.label}>Daily Challenge Winners</label>
+        <MultiSelect options={activeComps} selected={dailyWinners} onChange={setDailyWinners} placeholder="No daily winners" />
 
-        <label style={S.label}>Elimination Winners (multi-select)</label>
-        <MultiSelect
-          options={activeComps}
-          selected={elimWinners}
-          onChange={setElimWinners}
-          placeholder="No elimination this episode"
-        />
+        <label style={S.label}>Elimination Winners</label>
+        <MultiSelect options={activeComps} selected={elimWinners} onChange={setElimWinners} placeholder="No elimination" />
 
-        <label style={S.label}>Elimination Losers / Eliminated (multi-select)</label>
-        <MultiSelect
-          options={activeComps}
-          selected={elimLosers}
-          onChange={setElimLosers}
-          placeholder="No elimination this episode"
-        />
+        <label style={S.label}>Eliminated (Losers)</label>
+        <MultiSelect options={activeComps} selected={elimLosers} onChange={setElimLosers} placeholder="No elimination" />
 
-        <label style={{ ...S.label, marginTop: 16 }}>Buyback Penalties (−10 pts each)</label>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {players.map((pl) => (
-            <label key={pl.id} style={{
-              display: "flex", alignItems: "center", gap: 10,
-              padding: "8px 12px", background: "#1a0000", borderRadius: 8,
-              cursor: "pointer",
-            }}>
-              <input
-                type="checkbox"
-                checked={buybackPlayers.includes(pl.id)}
-                onChange={() => toggleBuyback(pl.id)}
-                style={{ accentColor: "#e50000" }}
-              />
-              <span style={{ fontSize: 14 }}>{pl.name}</span>
-            </label>
-          ))}
-        </div>
-
-        {error && (
-          <div style={{ color: "#f87171", fontSize: 13, marginTop: 10 }}>{error}</div>
-        )}
+        {error && <div style={{ color: "#f87171", fontSize: 13, marginTop: 10 }}>{error}</div>}
 
         <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
           <button onClick={onClose} style={{ ...S.btn("ghost"), flex: 1 }}>Cancel</button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            style={{ ...S.btn("primary"), flex: 1 }}
-          >
+          <button onClick={handleSave} disabled={saving} style={{ ...S.btn("primary"), flex: 1 }}>
             {saving ? "Saving…" : "Save Episode"}
           </button>
         </div>
@@ -559,25 +692,24 @@ function EpisodeModal({ season, players, previouslyEliminated, existingEpisode, 
   );
 }
 
-// ─── Buyback modal ────────────────────────────────────────────────────────────
+// ─── Buyback modal (winner pick only) ────────────────────────────────────────
 function BuybackModal({ player, season, previouslyEliminated, onClose, onSave }) {
-  const activeComps = season.competitors.filter(
-    (c) => !previouslyEliminated.map(Number).includes(Number(c.id))
-  );
-  const [step, setStep] = useState(1); // 1=which pick eliminated, 2=new pick
-  const [replacedSlot, setReplacedSlot] = useState(""); // "winner" | "wildcard"
+  const activeComps = season.competitors
+    .filter((c) => !previouslyEliminated.map(Number).includes(Number(c.id)))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   const [newComp, setNewComp] = useState("");
   const [saving, setSaving] = useState(false);
 
   async function handleSave() {
-    if (!replacedSlot || !newComp) return;
+    if (!newComp) return;
     setSaving(true);
-    await onSave({ replacedSlot, newComp: Number(newComp) });
+    await onSave({ newComp: Number(newComp) });
   }
 
   return (
     <div style={{
-      position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)",
+      position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)",
       zIndex: 200, overflowY: "auto", padding: "20px 16px",
     }}>
       <div style={{
@@ -588,90 +720,169 @@ function BuybackModal({ player, season, previouslyEliminated, onClose, onSave })
           Buyback — {player.name}
         </h2>
         <p style={{ color: "#888", fontSize: 13, marginBottom: 16 }}>
-          −10 pt penalty applies. Choose new pick for the eliminated slot.
+          −10 pt penalty. Replace your Winner Pick with a new competitor.
         </p>
 
-        {step === 1 && (
-          <>
-            <p style={{ fontSize: 14, marginBottom: 12 }}>Which pick was eliminated?</p>
-            <button
-              onClick={() => { setReplacedSlot("winner"); setStep(2); }}
-              style={S.btn("secondary")}
-            >
-              Winner Pick (1×)
-            </button>
-            <button
-              onClick={() => { setReplacedSlot("wildcard"); setStep(2); }}
-              style={S.btn("secondary")}
-            >
-              Wildcard Pick (2×)
-            </button>
-          </>
-        )}
+        <label style={S.label}>New Winner Pick</label>
+        <select value={newComp} onChange={(e) => setNewComp(e.target.value)} style={S.select}>
+          <option value="">— choose —</option>
+          {activeComps.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
 
-        {step === 2 && (
-          <>
-            <p style={{ fontSize: 14, marginBottom: 12 }}>
-              Select new {replacedSlot === "winner" ? "Winner Pick (1×)" : "Wildcard Pick (2×)"}:
-            </p>
-            <select
-              value={newComp}
-              onChange={(e) => setNewComp(e.target.value)}
-              style={S.select}
-            >
-              <option value="">— choose —</option>
-              {activeComps.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-            <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-              <button onClick={() => setStep(1)} style={{ ...S.btn("ghost"), flex: 1 }}>Back</button>
-              <button
-                onClick={handleSave}
-                disabled={!newComp || saving}
-                style={{ ...S.btn("primary"), flex: 1 }}
-              >
-                {saving ? "Saving…" : "Confirm Buyback"}
-              </button>
-            </div>
-          </>
-        )}
-
-        <button onClick={onClose} style={{ ...S.btn("ghost"), marginTop: 8 }}>Cancel</button>
+        <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+          <button onClick={onClose} style={{ ...S.btn("ghost"), flex: 1 }}>Cancel</button>
+          <button
+            onClick={handleSave}
+            disabled={!newComp || saving}
+            style={{ ...S.btn("primary"), flex: 1 }}
+          >
+            {saving ? "Saving…" : "Confirm Buyback (−10 pts)"}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-// ─── Main component ────────────────────────────────────────────────────────────
+// ─── All-Time Board ────────────────────────────────────────────────────────────
+function AllTimeBoard({ savedSeasons }) {
+  const [seasonResults, setSeasonResults] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const results = {};
+      for (const s of savedSeasons) {
+        results[s.id] = await db.getResultsForSeason(s.id);
+      }
+      if (!cancelled) {
+        setSeasonResults(results);
+        setLoading(false);
+      }
+    }
+    if (savedSeasons.length === 0) {
+      setLoading(false);
+    } else {
+      load();
+    }
+    return () => { cancelled = true; };
+  }, [savedSeasons]);
+
+  if (loading) return <div style={{ color: "#888", textAlign: "center", padding: 40 }}>Loading…</div>;
+
+  if (savedSeasons.length === 0) {
+    return <div style={{ ...S.card, color: "#888", textAlign: "center" }}>No completed seasons yet</div>;
+  }
+
+  const playerStats = {};
+  for (const s of savedSeasons) {
+    const results = seasonResults[s.id] || [];
+    for (const r of results) {
+      if (!playerStats[r.player_name]) {
+        playerStats[r.player_name] = { wins: 0, totalPts: 0, seasons: 0, bestScore: 0, bestSeason: "" };
+      }
+      const ps = playerStats[r.player_name];
+      ps.seasons += 1;
+      ps.totalPts += r.score;
+      if (r.finish_position === 1) ps.wins += 1;
+      if (r.score > ps.bestScore) {
+        ps.bestScore = r.score;
+        ps.bestSeason = s.season_name;
+      }
+    }
+  }
+
+  const sorted = Object.entries(playerStats)
+    .map(([name, s]) => ({ name, ...s, avg: s.seasons ? Math.round(s.totalPts / s.seasons) : 0 }))
+    .sort((a, b) => b.totalPts - a.totalPts);
+
+  return (
+    <div>
+      <div style={{ ...S.card, paddingBottom: 4 }}>
+        <div style={{ fontWeight: 800, color: "#e50000", fontSize: 15, marginBottom: 10, letterSpacing: 1 }}>
+          ALL-TIME LEADERBOARD
+        </div>
+        {sorted.map((p, i) => (
+          <div key={p.name} style={{
+            borderBottom: "1px solid #2a0000", paddingBottom: 10, marginBottom: 10,
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <span style={{ color: "#e50000", fontWeight: 700, marginRight: 6 }}>
+                  {i === 0 ? "🏆" : `#${i + 1}`}
+                </span>
+                <span style={{ fontWeight: 700 }}>{p.name}</span>
+              </div>
+              <span style={{ fontWeight: 900, fontSize: 20, color: "#e50000" }}>{p.totalPts}</span>
+            </div>
+            <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#888", marginTop: 3 }}>
+              <span>Wins: <b style={{ color: "#e2e8f0" }}>{p.wins}</b></span>
+              <span>Avg: <b style={{ color: "#e2e8f0" }}>{p.avg}/season</b></span>
+              <span>Best: <b style={{ color: "#e2e8f0" }}>{p.bestScore}</b></span>
+            </div>
+            {p.bestSeason && (
+              <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>Best: {p.bestSeason}</div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {savedSeasons.map((s) => {
+        const results = seasonResults[s.id] || [];
+        return (
+          <div key={s.id} style={S.card}>
+            <div style={{ fontWeight: 700, color: "#e50000", fontSize: 14, marginBottom: 8 }}>
+              {s.season_name} ({s.season_year})
+            </div>
+            {results.map((r) => (
+              <div key={r.id} style={{
+                display: "flex", justifyContent: "space-between", fontSize: 13,
+                padding: "5px 0", borderBottom: "1px solid #1a0000",
+              }}>
+                <div>
+                  <span style={{ color: "#888", marginRight: 6 }}>#{r.finish_position}</span>
+                  {r.player_name}
+                  {r.winner_pick && <span style={{ color: "#888", fontSize: 11, marginLeft: 6 }}>(W: {r.winner_pick})</span>}
+                </div>
+                <span style={{ fontWeight: 700 }}>{r.score}</span>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Main app ──────────────────────────────────────────────────────────────────
 export default function Challenge() {
-  const [screen, setScreen] = useState("home"); // home | rules | setup | scoring | alltime
+  const [screen, setScreen] = useState("home");
   const [activeSeason, setActiveSeason] = useState(null);
   const [selSeasonNum, setSelSeasonNum] = useState(null);
   const [players, setPlayers] = useState([]);
   const [events, setEvents] = useState([]);
   const [savedSeasons, setSavedSeasons] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [statusMsg, setStatusMsg] = useState("");
 
-  // Modals
   const [showEpModal, setShowEpModal] = useState(false);
   const [editEpisode, setEditEpisode] = useState(null);
-  const [showBuyback, setShowBuyback] = useState(null); // player obj
+  const [showBuyback, setShowBuyback] = useState(null);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
 
-  // Setup form
   const [newPlayerName, setNewPlayerName] = useState("");
-  const [setupTab, setSetupTab] = useState("players"); // players | picks
-
-  // Scoring tab
+  const [setupTab, setSetupTab] = useState("players");
   const [scoringTab, setScoringTab] = useState("scoreboard");
 
   const selSeason = CHALLENGE_SEASONS.find((s) => s.number === selSeasonNum);
+  const inProgress = activeSeason?.season_number != null;
+  const previouslyEliminatedIds = activeSeason?.eliminated_competitors || [];
 
   async function loadAll() {
     setLoading(true);
-    setError("");
     try {
       const [as, pls, evs, saved] = await Promise.all([
         db.getActiveSeason(),
@@ -685,17 +896,16 @@ export default function Challenge() {
       setSavedSeasons(saved || []);
       setSelSeasonNum((n) => n || as?.season_number || null);
     } catch (e) {
-      setError("Could not connect to database: " + e.message);
+      setStatusMsg("Could not connect to database: " + e.message);
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => { loadAll(); }, []);
+  useEffect(() => { document.title = "The Challenge Scoring"; }, []);
 
   // ── Derived ────────────────────────────────────────────────────────────────
-  const previouslyEliminatedIds = activeSeason?.eliminated_competitors || [];
-
   function getPlayerTotals() {
     return players.map((pl) => {
       const myEvents = events.filter((e) => e.player_id === pl.id);
@@ -706,21 +916,30 @@ export default function Challenge() {
         byEp[e.episode].push(e);
       }
       const maxEp = myEvents.reduce((m, e) => Math.max(m, e.episode || 0), 0);
-      return { ...pl, total, byEp, _maxEpisode: maxEp };
+      return { ...pl, total: Math.max(0, total), byEp, _maxEpisode: maxEp };
     }).sort((a, b) => b.total - a.total);
   }
 
   const rankedPlayers = getPlayerTotals();
+  const nextEpNum = (rankedPlayers[0]?._maxEpisode || 0) + 1;
+
+  // Recompute eliminated list from all remaining episode events
+  function recomputeEliminatedFromEvents(currentEvents) {
+    const allLosers = new Set();
+    for (const ev of currentEvents) {
+      const breakdown = ev.breakdown || {};
+      for (const id of (breakdown.elimLosers || [])) {
+        allLosers.add(Number(id));
+      }
+    }
+    return [...allLosers];
+  }
 
   // ── Setup actions ──────────────────────────────────────────────────────────
   async function startSeason() {
     if (!selSeasonNum) return;
     const s = CHALLENGE_SEASONS.find((x) => x.number === selSeasonNum);
-    await db.setActiveSeason({
-      season_number: s.number,
-      season_name: s.name,
-      eliminated_competitors: [],
-    });
+    await db.setActiveSeason({ season_number: s.number, season_name: s.name, eliminated_competitors: [] });
     await loadAll();
     setScreen("setup");
   }
@@ -733,7 +952,7 @@ export default function Challenge() {
       setNewPlayerName("");
       await loadAll();
     } catch (e) {
-      setError("Could not add player: " + e.message);
+      setStatusMsg("Could not add player: " + e.message);
     }
   }
 
@@ -743,43 +962,33 @@ export default function Challenge() {
   }
 
   async function savePicks(playerId, winnerId, wildcardId) {
-    await db.updatePlayer(playerId, {
-      winner_pick: winnerId || null,
-      wildcard_pick: wildcardId || null,
-    });
+    await db.updatePlayer(playerId, { winner_pick: winnerId || null, wildcard_pick: wildcardId || null });
     await loadAll();
   }
 
   // ── Episode scoring ────────────────────────────────────────────────────────
   async function saveEpisode(ep) {
-    // Delete existing events for this episode
     await db.deleteEpisodeEvents(ep.episode);
 
-    // Score each player
     for (const pl of players) {
-      const pts = scoreEpisode(pl, ep, previouslyEliminatedIds);
-      const total = pts.reduce((s, p) => s + p.points, 0);
+      const result = scoreEpisode(pl, ep, previouslyEliminatedIds);
       await db.insertEvent({
         player_id: pl.id,
         event_type: "episode",
         episode: ep.episode,
-        points: total,
-        breakdown: { items: pts, daily: ep.dailyWinners, elimWinners: ep.eliminationWinners, elimLosers: ep.eliminationLosers },
+        points: result.total,
+        breakdown: {
+          items: result.items,
+          daily: ep.dailyWinners,
+          elimWinners: ep.eliminationWinners,
+          elimLosers: ep.eliminationLosers,
+        },
       });
-    }
-
-    // Buyback penalties (separate event per player)
-    for (const pid of ep.buybackPenalties || []) {
-      const exists = events.find((e) => e.player_id === pid && e.episode === ep.episode && e.event_type === "buyback");
-      // already included in pts above — handled in scoreEpisode
     }
 
     // Update eliminated list
     const newElim = [
-      ...new Set([
-        ...previouslyEliminatedIds.map(Number),
-        ...ep.eliminationLosers.map(Number),
-      ]),
+      ...new Set([...previouslyEliminatedIds.map(Number), ...ep.eliminationLosers.map(Number)]),
     ];
     await db.setActiveSeason({ eliminated_competitors: newElim });
 
@@ -790,20 +999,28 @@ export default function Challenge() {
 
   async function deleteEpisode(epNum) {
     await db.deleteEpisodeEvents(epNum);
-    // Rebuild eliminated list without this episode's losers
-    // We don't have per-episode storage of losers to remove, so we recompute from remaining events
-    // Simplest: just reload — eliminated list stays (user can manually fix if needed)
+    // Reload events and recompute eliminated list from remaining episodes
+    const remaining = (await db.getEvents()) || [];
+    const newElim = recomputeEliminatedFromEvents(remaining);
+    await db.setActiveSeason({ eliminated_competitors: newElim });
     await loadAll();
   }
 
-  // ── Buyback ────────────────────────────────────────────────────────────────
-  async function processBuyback(player, { replacedSlot, newComp }) {
-    const update = replacedSlot === "winner"
-      ? { winner_pick: newComp, buyback_competitor: newComp }
-      : { wildcard_pick: newComp, buyback_competitor: newComp };
-    await db.updatePlayer(player.id, update);
-    // Remove from eliminated list (they bought back)
-    // The new pick will be scored at 1× (buyback_competitor check in scoring)
+  // ── Buyback (winner pick only, deducts 10pts as a separate event) ──────────
+  async function processBuyback(player, { newComp }) {
+    // Update winner pick to new competitor, track as buyback
+    await db.updatePlayer(player.id, {
+      winner_pick: newComp,
+      buyback_competitor: newComp,
+    });
+    // Insert a buyback penalty event (episode 0 = non-episode deduction)
+    await db.insertEvent({
+      player_id: player.id,
+      event_type: "buyback",
+      episode: 0,
+      points: -10,
+      breakdown: { label: "Buyback Penalty", newCompetitor: newComp },
+    });
     await loadAll();
     setShowBuyback(null);
   }
@@ -811,80 +1028,81 @@ export default function Challenge() {
   // ── End season ─────────────────────────────────────────────────────────────
   async function endSeason() {
     if (!activeSeason?.season_number || !selSeason) return;
-    const sn = selSeason;
+    setStatusMsg("Saving season…");
+    try {
+      // Delete existing saves for this season number
+      const fresh = await db.getSavedSeasons();
+      const existing = (fresh || []).filter((s) => s.season_number === selSeason.number);
+      for (const s of existing) {
+        await db.deleteResults(s.id);
+        await db.deleteSavedSeason(s.id);
+      }
 
-    // Delete existing saves for this season
-    const fresh = await db.getSavedSeasons();
-    const existing = (fresh || []).filter((s) => s.season_number === sn.number);
-    for (const s of existing) {
-      await db.deleteResults(s.id);
-      await db.deleteSavedSeason(s.id);
-    }
-
-    // Save season record
-    const [savedSeason] = await db.saveSeasonRecord({
-      season_number: sn.number,
-      season_name: sn.name,
-      season_year: sn.year,
-    });
-
-    // Save per-player results
-    const ranked = getPlayerTotals().sort((a, b) => b.total - a.total);
-    for (let i = 0; i < ranked.length; i++) {
-      const pl = ranked[i];
-      const wComp = sn.competitors.find((c) => c.id === pl.winner_pick);
-      const wcComp = sn.competitors.find((c) => c.id === pl.wildcard_pick);
-      await db.saveResult({
-        saved_season_id: savedSeason.id,
-        player_name: pl.name,
-        score: pl.total,
-        finish_position: i + 1,
-        winner_pick: wComp?.name || null,
-        wildcard_pick: wcComp?.name || null,
+      // Save season header
+      const savedArr = await db.saveSeasonRecord({
+        season_number: selSeason.number,
+        season_name: selSeason.name,
+        season_year: selSeason.year,
       });
+      const savedSeason = Array.isArray(savedArr) ? savedArr[0] : savedArr;
+
+      // Save per-player results
+      const ranked = getPlayerTotals().sort((a, b) => b.total - a.total);
+      for (let i = 0; i < ranked.length; i++) {
+        const pl = ranked[i];
+        const wComp = selSeason.competitors.find((c) => c.id === pl.winner_pick);
+        const wcComp = selSeason.competitors.find((c) => c.id === pl.wildcard_pick);
+        await db.saveResult({
+          saved_season_id: savedSeason.id,
+          player_name: pl.name,
+          score: pl.total,
+          finish_position: i + 1,
+          winner_pick: wComp?.name || null,
+          wildcard_pick: wcComp?.name || null,
+        });
+      }
+
+      // Clear active season
+      await db.clearActiveSeason();
+      await loadAll();
+      setScreen("home");
+      setShowEndConfirm(false);
+      setStatusMsg("");
+    } catch (e) {
+      setStatusMsg("Error ending season: " + e.message);
     }
-
-    await db.clearActiveSeason();
-    await loadAll();
-    setScreen("home");
-    setShowEndConfirm(false);
   }
-
-  // ── Screens ────────────────────────────────────────────────────────────────
-  const inProgress = activeSeason?.season_number != null;
 
   if (loading) return (
     <div style={S.app}>
-      <div style={{ textAlign: "center", padding: 60, color: "#e50000" }}>
-        Loading…
-      </div>
+      <div style={{ textAlign: "center", padding: 80, color: "#e50000", fontSize: 18 }}>Loading…</div>
     </div>
   );
 
   return (
     <div style={S.app}>
-      {/* Header */}
+      {/* Header with logo */}
       <div style={S.header}>
-        <div style={S.logoText}>THE CHALLENGE</div>
-        <div style={S.logoSub}>Prediction League</div>
+        <img
+          src={LOGO_SRC}
+          alt="The Challenge"
+          style={{ width: "100%", maxWidth: 480, display: "block", margin: "0 auto" }}
+        />
       </div>
 
       {/* Nav */}
       <div style={S.nav}>
         {["home", "rules", ...(inProgress ? ["setup", "scoring"] : []), "alltime"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setScreen(tab)}
-            style={S.navBtn(screen === tab)}
-          >
+          <button key={tab} onClick={() => setScreen(tab)} style={S.navBtn(screen === tab)}>
             {tab === "alltime" ? "All-Time" : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
 
-      {error && (
-        <div style={{ margin: "12px 16px", padding: 12, background: "#7f1d1d", borderRadius: 8, color: "#fca5a5", fontSize: 13 }}>
-          {error}
+      {statusMsg && (
+        <div style={{ margin: "10px 16px", padding: 12, background: "#7f1d1d", borderRadius: 8, color: "#fca5a5", fontSize: 13 }}>
+          {statusMsg}
+          <button onClick={() => setStatusMsg("")} style={{ float: "right", background: "none", border: "none", color: "#fca5a5", cursor: "pointer" }}>×</button>
         </div>
       )}
 
@@ -898,7 +1116,7 @@ export default function Challenge() {
                   <div style={{ fontWeight: 700, fontSize: 16 }}>
                     {activeSeason.season_name || `Season ${activeSeason.season_number}`}
                   </div>
-                  <div style={{ fontSize: 12, color: "#e50000", marginTop: 2 }}>● IN PROGRESS</div>
+                  <div style={{ fontSize: 12, color: "#e50000", marginTop: 2, fontWeight: 700 }}>● IN PROGRESS</div>
                 </div>
                 <button onClick={() => setScreen("scoring")} style={{
                   padding: "8px 16px", background: "#e50000", border: "none",
@@ -915,18 +1133,14 @@ export default function Challenge() {
                 onChange={(e) => setSelSeasonNum(Number(e.target.value))}
                 style={S.select}
               >
-                <option value="">— choose —</option>
+                <option value="">— choose a season —</option>
                 {CHALLENGE_SEASONS.map((s) => (
                   <option key={s.number} value={s.number}>
                     Season {s.number}: {s.name} ({s.year})
                   </option>
                 ))}
               </select>
-              <button
-                onClick={startSeason}
-                disabled={!selSeasonNum}
-                style={S.btn("primary")}
-              >
+              <button onClick={startSeason} disabled={!selSeasonNum} style={S.btn("primary")}>
                 Start Season
               </button>
             </div>
@@ -934,9 +1148,7 @@ export default function Challenge() {
 
           {savedSeasons.length > 0 && (
             <div style={S.card}>
-              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8, color: "#e50000" }}>
-                Completed Seasons
-              </div>
+              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8, color: "#e50000" }}>Completed Seasons</div>
               {savedSeasons.map((s) => (
                 <div key={s.id} style={{
                   display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -957,18 +1169,18 @@ export default function Challenge() {
       {/* ── RULES ── */}
       {screen === "rules" && (
         <div style={S.card}>
-          <h2 style={{ color: "#e50000", marginBottom: 12, fontSize: 18 }}>Scoring Rules</h2>
+          <h2 style={{ color: "#e50000", marginBottom: 16, fontSize: 18 }}>Scoring Rules</h2>
           {[
-            ["Winner Pick (1×)", "Pick one competitor to win. Earns 1pt per daily win, 3pts per elimination win."],
-            ["Wildcard Pick (2×)", "Pick one 'wild card' competitor. All points doubled — 2pts daily, 6pts elimination."],
-            ["Buyback", "If your pick is eliminated, pay −10pts and choose a replacement. Replacement scores at original multiplier (no re-wild-card)."],
-            ["Daily Challenge Win", "+1pt (×2 for wildcard)"],
-            ["Elimination Win", "+3pts (×6 for wildcard)"],
-            ["No partial credit", "Eliminated competitors earn 0 points for that episode forward."],
+            ["Winner Pick (1×)", "Pick one competitor. Earns 1pt per daily challenge win, 3pts per elimination win."],
+            ["Wildcard Pick (2×)", "Pick one wild card — all points doubled: 2pts daily, 6pts elimination win. Must be chosen before the season starts."],
+            ["Buyback (−10 pts)", "If your Winner Pick is eliminated, pay −10pts and swap to a new competitor. Wildcard picks cannot be bought back."],
+            ["Daily Challenge Win", "+1pt for Winner Pick (2pt for Wildcard)."],
+            ["Elimination Win", "+3pts for Winner Pick (6pt for Wildcard)."],
+            ["Floor at 0", "Episode scores can never go below 0. Season totals can go negative from buyback penalties only."],
           ].map(([title, desc]) => (
-            <div key={title} style={{ marginBottom: 12 }}>
+            <div key={title} style={{ marginBottom: 14 }}>
               <div style={{ fontWeight: 700, color: "#e50000", fontSize: 13 }}>{title}</div>
-              <div style={{ fontSize: 13, color: "#ccc", marginTop: 2 }}>{desc}</div>
+              <div style={{ fontSize: 13, color: "#ccc", marginTop: 3 }}>{desc}</div>
             </div>
           ))}
         </div>
@@ -977,17 +1189,13 @@ export default function Challenge() {
       {/* ── SETUP ── */}
       {screen === "setup" && inProgress && selSeason && (
         <div>
-          <div style={{ display: "flex", gap: 0, margin: "12px 16px 0", borderRadius: 10, overflow: "hidden", border: "1px solid #e50000" }}>
+          <div style={{ display: "flex", margin: "12px 16px 0", borderRadius: 10, overflow: "hidden", border: "1px solid #e50000" }}>
             {["players", "picks"].map((t) => (
-              <button
-                key={t}
-                onClick={() => setSetupTab(t)}
-                style={{
-                  flex: 1, padding: "10px 0", border: "none", cursor: "pointer",
-                  background: setupTab === t ? "#e50000" : "#1a0000",
-                  color: "#fff", fontWeight: 700, fontSize: 13,
-                }}
-              >
+              <button key={t} onClick={() => setSetupTab(t)} style={{
+                flex: 1, padding: "10px 0", border: "none", cursor: "pointer",
+                background: setupTab === t ? "#e50000" : "#1a0000",
+                color: "#fff", fontWeight: 700, fontSize: 13,
+              }}>
                 {t.charAt(0).toUpperCase() + t.slice(1)}
               </button>
             ))}
@@ -1017,7 +1225,7 @@ export default function Challenge() {
                   }}>
                     <span style={{ fontSize: 14 }}>{pl.name}</span>
                     <button onClick={() => removePlayer(pl.id)} style={{
-                      background: "none", border: "none", color: "#e50000", cursor: "pointer", fontSize: 18,
+                      background: "none", border: "none", color: "#e50000", cursor: "pointer", fontSize: 20,
                     }}>×</button>
                   </div>
                 ))}
@@ -1028,9 +1236,7 @@ export default function Challenge() {
           {setupTab === "picks" && (
             <div>
               {players.map((pl) => {
-                const activeComps = selSeason.competitors.filter(
-                  (c) => !previouslyEliminatedIds.map(Number).includes(Number(c.id))
-                );
+                const sorted = selSeason.competitors.slice().sort((a, b) => a.name.localeCompare(b.name));
                 return (
                   <div key={pl.id} style={S.card}>
                     <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10, color: "#e50000" }}>
@@ -1044,28 +1250,25 @@ export default function Challenge() {
                       style={S.select}
                     >
                       <option value="">— none —</option>
-                      {selSeason.competitors.sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
+                      {sorted.map((c) => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
                     </select>
 
-                    <label style={S.label}>Wildcard Pick (2×) — before season starts</label>
+                    <label style={S.label}>Wildcard Pick (2×)</label>
                     <select
                       value={pl.wildcard_pick || ""}
                       onChange={(e) => savePicks(pl.id, pl.winner_pick, Number(e.target.value) || null)}
                       style={S.select}
                     >
                       <option value="">— none —</option>
-                      {selSeason.competitors.sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
+                      {sorted.map((c) => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
                     </select>
 
-                    <button
-                      onClick={() => setShowBuyback(pl)}
-                      style={{ ...S.btn("ghost"), marginTop: 12 }}
-                    >
-                      🔄 Buyback (−10pts)
+                    <button onClick={() => setShowBuyback(pl)} style={{ ...S.btn("ghost"), marginTop: 12 }}>
+                      🔄 Buyback — Replace Winner Pick (−10 pts)
                     </button>
                   </div>
                 );
@@ -1078,17 +1281,13 @@ export default function Challenge() {
       {/* ── SCORING ── */}
       {screen === "scoring" && inProgress && selSeason && (
         <div>
-          <div style={{ display: "flex", gap: 0, margin: "12px 16px 0", borderRadius: 10, overflow: "hidden", border: "1px solid #e50000" }}>
+          <div style={{ display: "flex", margin: "12px 16px 0", borderRadius: 10, overflow: "hidden", border: "1px solid #e50000" }}>
             {["scoreboard", "episodes"].map((t) => (
-              <button
-                key={t}
-                onClick={() => setScoringTab(t)}
-                style={{
-                  flex: 1, padding: "10px 0", border: "none", cursor: "pointer",
-                  background: scoringTab === t ? "#e50000" : "#1a0000",
-                  color: "#fff", fontWeight: 700, fontSize: 13,
-                }}
-              >
+              <button key={t} onClick={() => setScoringTab(t)} style={{
+                flex: 1, padding: "10px 0", border: "none", cursor: "pointer",
+                background: scoringTab === t ? "#e50000" : "#1a0000",
+                color: "#fff", fontWeight: 700, fontSize: 13,
+              }}>
                 {t.charAt(0).toUpperCase() + t.slice(1)}
               </button>
             ))}
@@ -1118,14 +1317,11 @@ export default function Challenge() {
                 );
               })}
 
-              <div style={{ margin: "0 16px" }}>
+              <div style={{ margin: "4px 16px 0" }}>
                 <button onClick={() => setShowEpModal(true)} style={S.btn("primary")}>
-                  + Score Episode {(rankedPlayers[0]?._maxEpisode || 0) + 1}
+                  + Score Episode {nextEpNum}
                 </button>
-                <button
-                  onClick={() => setShowEndConfirm(true)}
-                  style={S.btn("danger")}
-                >
+                <button onClick={() => setShowEndConfirm(true)} style={S.btn("danger")}>
                   End Season
                 </button>
               </div>
@@ -1134,17 +1330,14 @@ export default function Challenge() {
 
           {scoringTab === "episodes" && (
             <div>
-              {/* Group events by episode */}
               {(() => {
-                const eps = [...new Set(events.map((e) => e.episode))].sort((a, b) => b - a);
-                if (eps.length === 0) return (
-                  <div style={{ ...S.card, color: "#888", textAlign: "center" }}>
-                    No episodes scored yet
-                  </div>
+                const epNums = [...new Set(events.filter(e => e.episode > 0).map((e) => e.episode))].sort((a, b) => b - a);
+                if (epNums.length === 0) return (
+                  <div style={{ ...S.card, color: "#888", textAlign: "center" }}>No episodes scored yet</div>
                 );
-                return eps.map((ep) => {
+                return epNums.map((ep) => {
                   const epEvents = events.filter((e) => e.episode === ep);
-                  const sampleBreakdown = epEvents[0]?.breakdown || {};
+                  const bd = epEvents[0]?.breakdown || {};
                   return (
                     <div key={ep} style={S.card}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -1154,41 +1347,38 @@ export default function Challenge() {
                             onClick={() => {
                               setEditEpisode({
                                 episode: ep,
-                                dailyWinners: sampleBreakdown.daily || [],
-                                eliminationWinners: sampleBreakdown.elimWinners || [],
-                                eliminationLosers: sampleBreakdown.elimLosers || [],
-                                buybackPenalties: [],
+                                dailyWinners: bd.daily || [],
+                                eliminationWinners: bd.elimWinners || [],
+                                eliminationLosers: bd.elimLosers || [],
                               });
                               setShowEpModal(true);
                             }}
                             style={{ fontSize: 12, padding: "4px 10px", background: "#2a2f3e", border: "none", borderRadius: 6, color: "#ccc", cursor: "pointer" }}
-                          >
-                            Edit
-                          </button>
+                          >Edit</button>
                           <button
                             onClick={() => { if (window.confirm(`Delete Episode ${ep}?`)) deleteEpisode(ep); }}
                             style={{ fontSize: 12, padding: "4px 10px", background: "#7f1d1d", border: "none", borderRadius: 6, color: "#fff", cursor: "pointer" }}
-                          >
-                            Delete
-                          </button>
+                          >Delete</button>
                         </div>
                       </div>
-                      {sampleBreakdown.daily?.length > 0 && (
-                        <div style={{ fontSize: 12, color: "#888", marginBottom: 4 }}>
-                          Daily Winners: {selSeason.competitors.filter(c => sampleBreakdown.daily?.map(Number).includes(Number(c.id))).map(c => c.name).join(", ")}
+
+                      {bd.daily?.length > 0 && (
+                        <div style={{ fontSize: 12, color: "#aaa", marginBottom: 3 }}>
+                          Daily: {selSeason.competitors.filter(c => (bd.daily || []).map(Number).includes(Number(c.id))).map(c => c.name).join(", ")}
                         </div>
                       )}
-                      {sampleBreakdown.elimWinners?.length > 0 && (
-                        <div style={{ fontSize: 12, color: "#888", marginBottom: 4 }}>
-                          Elim Winners: {selSeason.competitors.filter(c => sampleBreakdown.elimWinners?.map(Number).includes(Number(c.id))).map(c => c.name).join(", ")}
+                      {bd.elimWinners?.length > 0 && (
+                        <div style={{ fontSize: 12, color: "#aaa", marginBottom: 3 }}>
+                          Elim Won: {selSeason.competitors.filter(c => (bd.elimWinners || []).map(Number).includes(Number(c.id))).map(c => c.name).join(", ")}
                         </div>
                       )}
-                      {sampleBreakdown.elimLosers?.length > 0 && (
+                      {bd.elimLosers?.length > 0 && (
                         <div style={{ fontSize: 12, color: "#e50000", marginBottom: 8 }}>
-                          Eliminated: {selSeason.competitors.filter(c => sampleBreakdown.elimLosers?.map(Number).includes(Number(c.id))).map(c => c.name).join(", ")}
+                          Eliminated: {selSeason.competitors.filter(c => (bd.elimLosers || []).map(Number).includes(Number(c.id))).map(c => c.name).join(", ")}
                         </div>
                       )}
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                         {epEvents
                           .sort((a, b) => {
                             const pa = players.find(p => p.id === a.player_id);
@@ -1200,7 +1390,7 @@ export default function Challenge() {
                             return (
                               <div key={ev.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "2px 0" }}>
                                 <span>{pl?.name}</span>
-                                <span style={{ color: ev.points >= 0 ? "#22c55e" : "#f87171", fontWeight: 700 }}>
+                                <span style={{ color: ev.points > 0 ? "#22c55e" : ev.points < 0 ? "#f87171" : "#888", fontWeight: 700 }}>
                                   {ev.points >= 0 ? "+" : ""}{ev.points}
                                 </span>
                               </div>
@@ -1218,26 +1408,18 @@ export default function Challenge() {
 
       {/* ── ALL-TIME ── */}
       {screen === "alltime" && (
-        <div>
-          {savedSeasons.length === 0 ? (
-            <div style={{ ...S.card, color: "#888", textAlign: "center" }}>
-              No completed seasons yet
-            </div>
-          ) : (
-            savedSeasons.map(async (s) => null) // placeholder — loaded below
-          )}
-          <AllTimeBoard savedSeasons={savedSeasons} db={db} />
-        </div>
+        <AllTimeBoard savedSeasons={savedSeasons} />
       )}
 
       {/* ── MODALS ── */}
       {showEpModal && selSeason && (
         <EpisodeModal
-          key={editEpisode?.episode || "new"}
+          key={editEpisode ? `edit-${editEpisode.episode}` : `new-${nextEpNum}`}
           season={selSeason}
           players={rankedPlayers}
           previouslyEliminated={previouslyEliminatedIds}
           existingEpisode={editEpisode}
+          nextEpNum={nextEpNum}
           onClose={() => { setShowEpModal(false); setEditEpisode(null); }}
           onSave={saveEpisode}
         />
@@ -1255,111 +1437,19 @@ export default function Challenge() {
 
       {showEndConfirm && (
         <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)",
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)",
           zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
         }}>
           <div style={{ background: "#111", border: "1px solid #e50000", borderRadius: 16, padding: 24, maxWidth: 380, width: "100%" }}>
             <h3 style={{ color: "#e50000", marginBottom: 8 }}>End Season?</h3>
             <p style={{ color: "#ccc", fontSize: 14, marginBottom: 16 }}>
-              Final scores will be saved to the all-time leaderboard and the active season will be cleared.
+              Final scores will be saved to the all-time leaderboard and the active season will be cleared for everyone.
             </p>
             <button onClick={endSeason} style={S.btn("danger")}>Yes, End Season</button>
             <button onClick={() => setShowEndConfirm(false)} style={S.btn("ghost")}>Cancel</button>
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-// ─── All-Time Board (separate component to handle async results) ──────────────
-function AllTimeBoard({ savedSeasons, db }) {
-  const [seasonResults, setSeasonResults] = useState({});
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function load() {
-      const results = {};
-      for (const s of savedSeasons) {
-        results[s.id] = await db.getResultsForSeason(s.id);
-      }
-      setSeasonResults(results);
-      setLoading(false);
-    }
-    load();
-  }, [savedSeasons]);
-
-  if (loading) return <div style={{ color: "#888", textAlign: "center", padding: 40 }}>Loading…</div>;
-
-  // Aggregate stats
-  const playerStats = {};
-  for (const s of savedSeasons) {
-    const results = seasonResults[s.id] || [];
-    for (const r of results) {
-      if (!playerStats[r.player_name]) {
-        playerStats[r.player_name] = { wins: 0, totalPts: 0, seasons: 0, bestScore: 0, bestSeason: "" };
-      }
-      const ps = playerStats[r.player_name];
-      ps.seasons += 1;
-      ps.totalPts += r.score;
-      if (r.finish_position === 1) ps.wins += 1;
-      if (r.score > ps.bestScore) {
-        ps.bestScore = r.score;
-        ps.bestSeason = s.season_name;
-      }
-    }
-  }
-
-  const sorted = Object.entries(playerStats)
-    .map(([name, s]) => ({ name, ...s, avg: s.seasons ? Math.round(s.totalPts / s.seasons) : 0 }))
-    .sort((a, b) => b.totalPts - a.totalPts);
-
-  return (
-    <div>
-      {sorted.map((p, i) => (
-        <div key={p.name} style={{
-          background: "#111", border: "1px solid #2a0000", borderRadius: 12,
-          padding: 14, margin: "10px 16px",
-        }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-            <div>
-              <span style={{ color: "#e50000", fontWeight: 700, marginRight: 6 }}>{i === 0 ? "🏆" : `#${i + 1}`}</span>
-              <span style={{ fontWeight: 700 }}>{p.name}</span>
-            </div>
-            <span style={{ fontWeight: 900, fontSize: 20, color: "#e50000" }}>{p.totalPts}</span>
-          </div>
-          <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#888" }}>
-            <span>Wins: <b style={{ color: "#e2e8f0" }}>{p.wins}</b></span>
-            <span>Avg: <b style={{ color: "#e2e8f0" }}>{p.avg}/season</b></span>
-            <span>Best: <b style={{ color: "#e2e8f0" }}>{p.bestScore}</b></span>
-          </div>
-          {p.bestSeason && (
-            <div style={{ fontSize: 11, color: "#555", marginTop: 3 }}>Best season: {p.bestSeason}</div>
-          )}
-        </div>
-      ))}
-
-      <div style={{ margin: "16px", borderTop: "1px solid #2a0000", paddingTop: 16 }}>
-        {savedSeasons.map((s) => {
-          const results = seasonResults[s.id] || [];
-          return (
-            <div key={s.id} style={{ marginBottom: 16 }}>
-              <div style={{ fontWeight: 700, color: "#e50000", fontSize: 14, marginBottom: 6 }}>
-                {s.season_name} ({s.season_year})
-              </div>
-              {results.map((r) => (
-                <div key={r.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "4px 0", borderBottom: "1px solid #1a0000" }}>
-                  <span>
-                    <span style={{ color: "#888", marginRight: 6 }}>#{r.finish_position}</span>
-                    {r.player_name}
-                  </span>
-                  <span style={{ fontWeight: 700 }}>{r.score}</span>
-                </div>
-              ))}
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }
