@@ -29,7 +29,7 @@ async function sb(path, method = "GET", body = null, extraHeaders = {}) {
 
 // ─── All seasons 1–42 ─────────────────────────────────────────────────────────
 const CHALLENGE_SEASONS = [
-  { number: 42, name: "Double Agents: All Stars", year: 2025, competitors: [
+  { number: 42, name: "Cutthroat", year: 2026, competitors: [
     {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"Big T Fazakerley"},
     {id:4,name:"Cara Maria Sorbello"},{id:5,name:"CT Tamburello"},{id:6,name:"Darrell Taylor"},
     {id:7,name:"Derrick Kosinski"},{id:8,name:"Emanuel Neagu"},{id:9,name:"Horacio Gutierrez Jr."},
@@ -38,7 +38,7 @@ const CHALLENGE_SEASONS = [
     {id:16,name:"Nany Gonzalez"},{id:17,name:"Olivia Kaiser"},{id:18,name:"Rachel Robinson"},
     {id:19,name:"Tori Deal"},{id:20,name:"Wes Bergmann"},
   ]},
-  { number: 41, name: "Emergency", year: 2025, competitors: [
+  { number: 41, name: "Vets & New Threats", year: 2025, competitors: [
     {id:1,name:"Amber Borzotra"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Berna Canbeldek"},
     {id:4,name:"Colleen Schneider"},{id:5,name:"CT Tamburello"},{id:6,name:"Devin Walker"},
     {id:7,name:"Emanuel Neagu"},{id:8,name:"Horacio Gutierrez Jr."},{id:9,name:"Jay Starrett"},
@@ -135,7 +135,7 @@ const CHALLENGE_SEASONS = [
     {id:19,name:"Shane Landrum"},{id:20,name:"Tony Raines"},{id:21,name:"Victor Arroyo"},
     {id:22,name:"Zach Nichols"},
   ]},
-  { number: 31, name: "Final Reckoning: Aftermath", year: 2018, competitors: [
+  { number: 31, name: "Vendettas", year: 2018, competitors: [
     {id:1,name:"Aneesa Ferreira"},{id:2,name:"Ashley Mitchell"},{id:3,name:"Bananas"},
     {id:4,name:"Brad Fiorenza"},{id:5,name:"CT Tamburello"},{id:6,name:"Camila Nakagawa"},
     {id:7,name:"Cara Maria Sorbello"},{id:8,name:"Darrell Taylor"},{id:9,name:"Derrick Kosinski"},
@@ -143,7 +143,7 @@ const CHALLENGE_SEASONS = [
     {id:13,name:"Laurel Stucky"},{id:14,name:"Leroy Garrett"},{id:15,name:"Marie Roda"},
     {id:16,name:"Natalie Negrotti"},{id:17,name:"Tony Raines"},{id:18,name:"Zach Nichols"},
   ]},
-  { number: 30, name: "Vendettas", year: 2018, competitors: [
+  { number: 30, name: "XXX: Dirty 30", year: 2017, competitors: [
     {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"Brad Fiorenza"},
     {id:4,name:"Britni Thornton"},{id:5,name:"CT Tamburello"},{id:6,name:"Cara Maria Sorbello"},
     {id:7,name:"Jemmye Carroll"},{id:8,name:"Joss Mooney"},{id:9,name:"Kam Williams"},
@@ -152,7 +152,7 @@ const CHALLENGE_SEASONS = [
     {id:16,name:"Natalie Negrotti"},{id:17,name:"Nicole Ramos"},{id:18,name:"Tony Raines"},
     {id:19,name:"Victor Arroyo"},{id:20,name:"Zach Nichols"},
   ]},
-  { number: 29, name: "Dirty Thirty", year: 2017, competitors: [
+  { number: 29, name: "Invasion of the Champions", year: 2017, competitors: [
     {id:1,name:"Amanda Garcia"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Ashley Mitchell"},
     {id:4,name:"Bananas"},{id:5,name:"Brad Fiorenza"},{id:6,name:"Britni Thornton"},
     {id:7,name:"CT Tamburello"},{id:8,name:"Cara Maria Sorbello"},{id:9,name:"Cory Wharton"},
@@ -162,7 +162,7 @@ const CHALLENGE_SEASONS = [
     {id:19,name:"Nelson Thomas"},{id:20,name:"Nicole Ramos"},{id:21,name:"Tony Raines"},
     {id:22,name:"Tori Hall"},{id:23,name:"Veronica Portillo"},{id:24,name:"Zach Nichols"},
   ]},
-  { number: 28, name: "XXX: Dirty Thirty Reunion", year: 2017, competitors: [
+  { number: 28, name: "Rivals III", year: 2016, competitors: [
     {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"Brad Fiorenza"},
     {id:4,name:"CT Tamburello"},{id:5,name:"Cara Maria Sorbello"},{id:6,name:"Derrick Kosinski"},
     {id:7,name:"Emily Schromm"},{id:8,name:"Evan Starkman"},{id:9,name:"Jemmye Carroll"},
@@ -171,7 +171,7 @@ const CHALLENGE_SEASONS = [
     {id:16,name:"Sarah Rice"},{id:17,name:"Susie Meister"},{id:18,name:"Wes Bergmann"},
     {id:19,name:"Zach Nichols"},
   ]},
-  { number: 27, name: "Invasion of the Champions", year: 2017, competitors: [
+  { number: 27, name: "Battle of the Bloodlines", year: 2015, competitors: [
     {id:1,name:"Amanda Garcia"},{id:2,name:"Ashley Cain"},{id:3,name:"Bananas"},
     {id:4,name:"Cara Maria Sorbello"},{id:5,name:"Cory Wharton"},{id:6,name:"CT Tamburello"},
     {id:7,name:"Hunter Barfield"},{id:8,name:"Jemmye Carroll"},{id:9,name:"Johnny Reilly"},
@@ -179,7 +179,7 @@ const CHALLENGE_SEASONS = [
     {id:13,name:"Nelson Thomas"},{id:14,name:"Nicole Ramos"},{id:15,name:"Theo Campbell"},
     {id:16,name:"Tony Raines"},
   ]},
-  { number: 26, name: "Rivals III", year: 2016, competitors: [
+  { number: 26, name: "Battle of the Exes II", year: 2015, competitors: [
     {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"Camila Nakagawa"},
     {id:4,name:"Cara Maria Sorbello"},{id:5,name:"CT Tamburello"},{id:6,name:"Dario Medrano"},
     {id:7,name:"Devin Walker"},{id:8,name:"Jenna Compono"},{id:9,name:"Johnny Reilly"},
@@ -188,7 +188,7 @@ const CHALLENGE_SEASONS = [
     {id:16,name:"Sarah Rice"},{id:17,name:"Tony Raines"},{id:18,name:"Wes Bergmann"},
     {id:19,name:"Zach Nichols"},
   ]},
-  { number: 25, name: "Bloodlines", year: 2015, competitors: [
+  { number: 25, name: "Free Agents", year: 2014, competitors: [
     {id:1,name:"Abram Boise"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Bananas"},
     {id:4,name:"Cara Maria Sorbello"},{id:5,name:"CT Tamburello"},{id:6,name:"Camila Nakagawa"},
     {id:7,name:"Cory Wharton"},{id:8,name:"Dario Medrano"},{id:9,name:"Jamie Banks"},
@@ -197,7 +197,7 @@ const CHALLENGE_SEASONS = [
     {id:16,name:"Leroy Garrett"},{id:17,name:"Mike Ross"},{id:18,name:"Nany Gonzalez"},
     {id:19,name:"Shane Landrum"},{id:20,name:"Thomas Buell"},{id:21,name:"Tony Raines"},
   ]},
-  { number: 24, name: "Battle of the Exes II", year: 2015, competitors: [
+  { number: 24, name: "Rivals II", year: 2013, competitors: [
     {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"CT Tamburello"},
     {id:4,name:"Cara Maria Sorbello"},{id:5,name:"Diem Brown"},{id:6,name:"Jay Mitchell"},
     {id:7,name:"Jenna Compono"},{id:8,name:"Jessica McCain"},{id:9,name:"Jordan Wiseley"},
@@ -205,7 +205,7 @@ const CHALLENGE_SEASONS = [
     {id:13,name:"Sarah Rice"},{id:14,name:"Thomas Buell"},{id:15,name:"Wes Bergmann"},
     {id:16,name:"Zach Nichols"},
   ]},
-  { number: 23, name: "Free Agents", year: 2014, competitors: [
+  { number: 23, name: "Battle of the Seasons", year: 2012, competitors: [
     {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"CT Tamburello"},
     {id:4,name:"Camila Nakagawa"},{id:5,name:"Cara Maria Sorbello"},{id:6,name:"Cooke"},
     {id:7,name:"Devyn Simone"},{id:8,name:"Diem Brown"},{id:9,name:"Dunbar Merrill"},
@@ -214,7 +214,7 @@ const CHALLENGE_SEASONS = [
     {id:16,name:"LaToya Jackson"},{id:17,name:"Nany Gonzalez"},{id:18,name:"Reilly"},
     {id:19,name:"Theresa Gonzalez"},{id:20,name:"Zach Nichols"},
   ]},
-  { number: 22, name: "Rivals II", year: 2013, competitors: [
+  { number: 22, name: "Battle of the Exes", year: 2012, competitors: [
     {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"CT Tamburello"},
     {id:4,name:"Camila Nakagawa"},{id:5,name:"Cara Maria Sorbello"},{id:6,name:"Cooke"},
     {id:7,name:"Diem Brown"},{id:8,name:"Emily Schromm"},{id:9,name:"Jemmye Carroll"},
@@ -223,7 +223,7 @@ const CHALLENGE_SEASONS = [
     {id:16,name:"Sarah Rice"},{id:17,name:"Theresa Gonzalez"},{id:18,name:"Trishelle Cannatella"},
     {id:19,name:"Ty Ruff"},{id:20,name:"Wes Bergmann"},
   ]},
-  { number: 21, name: "Battle of the Seasons", year: 2012, competitors: [
+  { number: 21, name: "Rivals", year: 2011, competitors: [
     {id:1,name:"Alton Williams"},{id:2,name:"Austin Cindy"},{id:3,name:"Bananas"},
     {id:4,name:"Big Easy"},{id:5,name:"Brooklyn CJ"},{id:6,name:"Camila Nakagawa"},
     {id:7,name:"Derek Chavez"},{id:8,name:"Dustin Zito"},{id:9,name:"Frank Sweeney"},
@@ -232,7 +232,7 @@ const CHALLENGE_SEASONS = [
     {id:17,name:"Sam"},{id:18,name:"Sarah Rice"},{id:19,name:"Trishelle Cannatella"},
     {id:20,name:"Wes Bergmann"},
   ]},
-  { number: 20, name: "Battle of the Exes", year: 2012, competitors: [
+  { number: 20, name: "Cutthroat", year: 2010, competitors: [
     {id:1,name:"Abram Boise"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Bananas"},
     {id:4,name:"CT Tamburello"},{id:5,name:"Cara Maria Sorbello"},{id:6,name:"Camila Nakagawa"},
     {id:7,name:"Diem Brown"},{id:8,name:"Emily Schromm"},{id:9,name:"Jasmine Reynaud"},
@@ -240,7 +240,7 @@ const CHALLENGE_SEASONS = [
     {id:13,name:"Paula Meronek"},{id:14,name:"Robin Hibbard"},{id:15,name:"Sarah Rice"},
     {id:16,name:"Ty Ruff"},
   ]},
-  { number: 19, name: "Rivals", year: 2011, competitors: [
+  { number: 19, name: "Fresh Meat II", year: 2010, competitors: [
     {id:1,name:"Adam Royer"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Bananas"},
     {id:4,name:"Brandon"},{id:5,name:"CT Tamburello"},{id:6,name:"Cara Maria Sorbello"},
     {id:7,name:"Camila Nakagawa"},{id:8,name:"Davis Mallory"},{id:9,name:"Evan Starkman"},
@@ -249,7 +249,7 @@ const CHALLENGE_SEASONS = [
     {id:16,name:"Paula Meronek"},{id:17,name:"Theresa Gonzalez"},{id:18,name:"Ty Ruff"},
     {id:19,name:"Wes Bergmann"},
   ]},
-  { number: 18, name: "Cutthroat", year: 2010, competitors: [
+  { number: 18, name: "The Ruins", year: 2009, competitors: [
     {id:1,name:"Abram Boise"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Bananas"},
     {id:4,name:"Brandon"},{id:5,name:"Cara Maria Sorbello"},{id:6,name:"CT Tamburello"},
     {id:7,name:"Emily Schromm"},{id:8,name:"Eric Banks"},{id:9,name:"Gray"},
@@ -257,7 +257,7 @@ const CHALLENGE_SEASONS = [
     {id:13,name:"Laurel Stucky"},{id:14,name:"Luke Wolfe"},{id:15,name:"Paula Meronek"},
     {id:16,name:"Theresa Gonzalez"},{id:17,name:"Tina Bridges"},{id:18,name:"Tyler Duckworth"},
   ]},
-  { number: 17, name: "Fresh Meat II", year: 2010, competitors: [
+  { number: 17, name: "The Duel II", year: 2009, competitors: [
     {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"Cara Maria Sorbello"},
     {id:4,name:"CJ Koegel"},{id:5,name:"Danny Jamieson"},{id:6,name:"Evelyn Smith"},
     {id:7,name:"Jeff Grenell"},{id:8,name:"Jillian Zoboroski"},{id:9,name:"Kenny Clark"},
@@ -265,7 +265,7 @@ const CHALLENGE_SEASONS = [
     {id:13,name:"Pete Connelly"},{id:14,name:"Ryan Kehoe"},
     {id:15,name:"Sandy Kang"},{id:16,name:"Theresa Gonzalez"},{id:17,name:"Wes Bergmann"},
   ]},
-  { number: 16, name: "The Ruins", year: 2009, competitors: [
+  { number: 16, name: "The Island", year: 2008, competitors: [
     {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"Brad Fiorenza"},
     {id:4,name:"Brianna"},{id:5,name:"Cohutta Grindstaff"},{id:6,name:"Craig"}  ,
     {id:7,name:"Danny Jamieson"},{id:8,name:"Dunbar Merrill"},{id:9,name:"Evan Starkman"},
@@ -274,7 +274,7 @@ const CHALLENGE_SEASONS = [
     {id:16,name:"Nick"},{id:17,name:"Sarah Rice"},{id:18,name:"Susie Meister"},
     {id:19,name:"Theresa Gonzalez"},{id:20,name:"Tonya Cooley"},{id:21,name:"Wes Bergmann"},
   ]},
-  { number: 15, name: "The Island", year: 2008, competitors: [
+  { number: 15, name: "The Gauntlet III", year: 2008, competitors: [
     {id:1,name:"Bananas"},{id:2,name:"Cohutta Grindstaff"},{id:3,name:"Dan"},{id:4,name:"Danny Jamieson"},
     {id:5,name:"Derek Chavez"},{id:6,name:"Dunbar Merrill"},{id:7,name:"Evelyn Smith"},
     {id:8,name:"Ibis"},{id:9,name:"Johanna Botta"},{id:10,name:"KellyAnne Judd"},
@@ -282,14 +282,14 @@ const CHALLENGE_SEASONS = [
     {id:14,name:"Reva"},{id:15,name:"Robin Hibbard"},{id:16,name:"Shauvon Torres"},
     {id:17,name:"Tina Bridges"},{id:18,name:"Tonya Cooley"},
   ]},
-  { number: 14, name: "The Duel II", year: 2009, competitors: [
+  { number: 14, name: "The Inferno 3", year: 2007, competitors: [
     {id:1,name:"Aneesa Ferreira"},{id:2,name:"Aviv Melmed"},{id:3,name:"Brittini"},
     {id:4,name:"Cara Maria Sorbello"},{id:5,name:"CT Tamburello"},{id:6,name:"Davis Mallory"},
     {id:7,name:"Evan Starkman"},{id:8,name:"Isaac Stout"},{id:9,name:"Kenny Clark"},
     {id:10,name:"Mark Long"},{id:11,name:"Noor"},{id:12,name:"Paula Meronek"},
     {id:13,name:"Rachel Robinson"},{id:14,name:"Ruthie Alcaide"},{id:15,name:"Tori Hall"},
   ]},
-  { number: 13, name: "The Gauntlet III", year: 2008, competitors: [
+  { number: 13, name: "The Duel", year: 2006, competitors: [
     {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"Brad Fiorenza"},
     {id:4,name:"CT Tamburello"},{id:5,name:"Danny Jamieson"},{id:6,name:"Evan Starkman"},
     {id:7,name:"Frank"},{id:8,name:"Johanna Botta"},{id:9,name:"Katie Cooley"},
@@ -297,7 +297,7 @@ const CHALLENGE_SEASONS = [
     {id:13,name:"Paula Meronek"},{id:14,name:"Robin Hibbard"},{id:15,name:"Ryan Kehoe"},
     {id:16,name:"Tonya Cooley"},{id:17,name:"Tori Hall"},
   ]},
-  { number: 12, name: "The Inferno III", year: 2007, competitors: [
+  { number: 12, name: "Fresh Meat", year: 2006, competitors: [
     {id:1,name:"Aneesa Ferreira"},{id:2,name:"Bananas"},{id:3,name:"Brad Fiorenza"},
     {id:4,name:"CT Tamburello"},{id:5,name:"Casey Cooper"},{id:6,name:"Danny Jamieson"},
     {id:7,name:"Davis Mallory"},{id:8,name:"Derek Chavez"},{id:9,name:"Evan Starkman"},
@@ -306,7 +306,7 @@ const CHALLENGE_SEASONS = [
     {id:16,name:"Robin Hibbard"},{id:17,name:"Ryan Kehoe"},{id:18,name:"Timmy Beggy"},
     {id:19,name:"Tonya Cooley"},{id:20,name:"Trishelle Cannatella"},{id:21,name:"Tyrie Ballard"},
   ]},
-  { number: 11, name: "Fresh Meat", year: 2006, competitors: [
+  { number: 11, name: "The Gauntlet 2", year: 2005, competitors: [
     {id:1,name:"Ace Amerson"},{id:2,name:"Aviv Melmed"},{id:3,name:"Coral Smith"},
     {id:4,name:"Darrell Taylor"},{id:5,name:"Derrick Kosinski"},{id:6,name:"Eric Banks"},
     {id:7,name:"Evan Starkman"},{id:8,name:"Evelyn Smith"},{id:9,name:"Jesse Sulidis"},
@@ -314,7 +314,7 @@ const CHALLENGE_SEASONS = [
     {id:13,name:"Melinda Martin"},{id:14,name:"Ryan Kehoe"},{id:15,name:"Tina Bridges"},
     {id:16,name:"Tonya Cooley"},
   ]},
-  { number: 10, name: "The Duel", year: 2006, competitors: [
+  { number: 10, name: "The Inferno II", year: 2005, competitors: [
     {id:1,name:"Aneesa Ferreira"},{id:2,name:"Aviv Melmed"},{id:3,name:"Brad Fiorenza"},
     {id:4,name:"Cara Zavaleta"},{id:5,name:"CT Tamburello"},{id:6,name:"Derrick Kosinski"},
     {id:7,name:"Evan Starkman"},{id:8,name:"Jodi Weatherton"},{id:9,name:"Johanna Botta"},
@@ -322,7 +322,7 @@ const CHALLENGE_SEASONS = [
     {id:13,name:"Randy Barry"},{id:14,name:"Svetlana Shusterman"},{id:15,name:"Wetsy"},
     {id:16,name:"Wes Bergmann"},
   ]},
-  { number: 9, name: "The Gauntlet II", year: 2005, competitors: [
+  { number: 9, name: "Battle of the Sexes 2", year: 2004, competitors: [
     {id:1,name:"Alton Williams"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Bananas"},
     {id:4,name:"Brad Fiorenza"},{id:5,name:"CT Tamburello"},{id:6,name:"Derrick Kosinski"},
     {id:7,name:"Jamie Banks"},{id:8,name:"Jillian Zoboroski"},{id:9,name:"Julie Stoffer"},
@@ -330,7 +330,7 @@ const CHALLENGE_SEASONS = [
     {id:13,name:"Robin Hibbard"},{id:14,name:"Ruthie Alcaide"},{id:15,name:"Susie Meister"},
     {id:16,name:"Timmy Beggy"},
   ]},
-  { number: 8, name: "The Inferno II", year: 2005, competitors: [
+  { number: 8, name: "The Inferno", year: 2004, competitors: [
     {id:1,name:"Abram Boise"},{id:2,name:"Alton Williams"},{id:3,name:"Aneesa Ferreira"},
     {id:4,name:"CT Tamburello"},{id:5,name:"Cara Zavaleta"},{id:6,name:"Darrell Taylor"},
     {id:7,name:"Derrick Kosinski"},{id:8,name:"Jamie Banks"},{id:9,name:"Jodi Weatherton"},
@@ -338,7 +338,7 @@ const CHALLENGE_SEASONS = [
     {id:13,name:"Mardi"},{id:14,name:"Mike Ross"},{id:15,name:"Timmy Beggy"},
     {id:16,name:"Tonya Cooley"},
   ]},
-  { number: 7, name: "Battle of the Sexes 2", year: 2004, competitors: [
+  { number: 7, name: "The Gauntlet", year: 2003, competitors: [
     {id:1,name:"Abram Boise"},{id:2,name:"Aneesa Ferreira"},{id:3,name:"Brad Fiorenza"},
     {id:4,name:"Coral Smith"},{id:5,name:"CT Tamburello"},{id:6,name:"Dan"},{id:7,name:"Darrell Taylor"},
     {id:8,name:"Ibis"},{id:9,name:"Jamie Banks"},{id:10,name:"Janelle"},
@@ -347,7 +347,7 @@ const CHALLENGE_SEASONS = [
     {id:17,name:"Robin Hibbard"},{id:18,name:"Steven Hill"},{id:19,name:"Timmy Beggy"},
     {id:20,name:"Tonya Cooley"},
   ]},
-  { number: 6, name: "The Inferno", year: 2003, competitors: [
+  { number: 6, name: "Battle of the Sexes", year: 2003, competitors: [
     {id:1,name:"Abram Boise"},{id:2,name:"Alton Williams"},{id:3,name:"CT Tamburello"},
     {id:4,name:"Coral Smith"},{id:5,name:"Darrell Taylor"},{id:6,name:"Jonny Fairplay"},
     {id:7,name:"Julie Stoffer"},{id:8,name:"Katie Cooley"},{id:9,name:"Leah Gillingwater"},
@@ -355,7 +355,7 @@ const CHALLENGE_SEASONS = [
     {id:13,name:"Ruthie Alcaide"},{id:14,name:"Shane Landrum"},{id:15,name:"Timmy Beggy"},
     {id:16,name:"Trishelle Cannatella"},
   ]},
-  { number: 5, name: "The Gauntlet", year: 2003, competitors: [
+  { number: 5, name: "Battle of the Seasons", year: 2002, competitors: [
     {id:1,name:"Adam Larson"},{id:2,name:"Alton Williams"},{id:3,name:"Coral Smith"},
     {id:4,name:"CT Tamburello"},{id:5,name:"Darrell Taylor"},{id:6,name:"Elka Brand"},
     {id:7,name:"Irulan Wilson"},{id:8,name:"Jamie Banks"},{id:9,name:"Jonny Fairplay"},
@@ -363,7 +363,7 @@ const CHALLENGE_SEASONS = [
     {id:13,name:"Mike Ross"},{id:14,name:"Nathan Moore"},{id:15,name:"Rachel Robinson"},
     {id:16,name:"Trishelle Cannatella"},
   ]},
-  { number: 4, name: "Battle of the Sexes", year: 2002, competitors: [
+  { number: 4, name: "Extreme Challenge", year: 2001, competitors: [
     {id:1,name:"Antoine"},{id:2,name:"Blair Herter"},{id:3,name:"Coral Smith"},
     {id:4,name:"Dan"},{id:5,name:"Darrell Taylor"},{id:6,name:"Emily Bailey"},
     {id:7,name:"Eric Banks"},{id:8,name:"Genesis"},{id:9,name:"Gladys"},
@@ -381,7 +381,7 @@ const CHALLENGE_SEASONS = [
     {id:14,name:"Puck"},{id:15,name:"Ruthie Alcaide"},{id:16,name:"Timmy Beggy"},
     {id:17,name:"Trishelle Cannatella"},
   ]},
-  { number: 2, name: "Road Rules: All Stars", year: 1998, competitors: [
+  { number: 2, name: "Real World/Road Rules Challenge", year: 1999, competitors: [
     {id:1,name:"Christian Shaffer"},{id:2,name:"Dan"},{id:3,name:"Elka Brand"},
     {id:4,name:"Holly"},{id:5,name:"James"},{id:6,name:"James Wilder"},
     {id:7,name:"Janet Zampieri"},{id:8,name:"Jason Defner"},{id:9,name:"Kameelah Phillips"},
@@ -857,6 +857,109 @@ function AllTimeBoard({ savedSeasons }) {
   );
 }
 
+// ─── Saved Season Detail Screen ───────────────────────────────────────────────
+function SeasonDetailScreen({ season, onBack, onDelete }) {
+  const [results, setResults] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    db.getResultsForSeason(season.id).then((r) => {
+      if (!cancelled) setResults(r || []);
+    });
+    return () => { cancelled = true; };
+  }, [season.id]);
+
+  async function handleDelete() {
+    setDeleting(true);
+    await db.deleteResults(season.id);
+    await db.deleteSavedSeason(season.id);
+    onDelete();
+  }
+
+  // Parse episode breakdown from season data if stored
+  const episodes = (() => {
+    if (!season.episode_breakdown) return [];
+    try { return JSON.parse(season.episode_breakdown); } catch { return []; }
+  })();
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ ...S.card, marginTop: 0, borderRadius: 0, margin: 0, padding: "14px 16px", borderLeft: "none", borderRight: "none", borderTop: "none", display: "flex", alignItems: "center", gap: 12 }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", color: "#e50000", fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>‹</button>
+        <div>
+          <div style={{ fontWeight: 800, fontSize: 16 }}>{season.season_name}</div>
+          <div style={{ fontSize: 12, color: "#888" }}>{season.season_year} · Completed</div>
+        </div>
+      </div>
+
+      {/* Final Standings */}
+      <div style={S.card}>
+        <div style={{ fontWeight: 700, color: "#e50000", fontSize: 13, letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>Final Standings</div>
+        {results === null ? (
+          <div style={{ color: "#888", textAlign: "center", padding: 20 }}>Loading…</div>
+        ) : results.length === 0 ? (
+          <div style={{ color: "#888", textAlign: "center", padding: 12 }}>No results recorded</div>
+        ) : (
+          results.map((r, i) => (
+            <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: i < results.length - 1 ? "1px solid #2a0000" : "none" }}>
+              <div>
+                <span style={{ color: i === 0 ? "#fbbf24" : "#888", fontWeight: 700, marginRight: 8, fontSize: 13 }}>
+                  {i === 0 ? "🏆" : `#${r.finish_position}`}
+                </span>
+                <span style={{ fontWeight: i === 0 ? 700 : 400, fontSize: 14 }}>{r.player_name}</span>
+                {r.winner_pick && (
+                  <div style={{ fontSize: 11, color: "#666", marginLeft: 22, marginTop: 1 }}>
+                    Winner: {r.winner_pick}{r.wildcard_pick ? ` · Wildcard: ${r.wildcard_pick}` : ""}
+                  </div>
+                )}
+              </div>
+              <span style={{ fontWeight: 900, fontSize: 18, color: "#e50000" }}>{r.score}</span>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Episode Breakdown — only shown if stored */}
+      {episodes.length > 0 && (
+        <div style={S.card}>
+          <div style={{ fontWeight: 700, color: "#e50000", fontSize: 13, letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>Episode Breakdown</div>
+          {episodes.map((ep) => (
+            <div key={ep.episode} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: "1px solid #2a0000" }}>
+              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Episode {ep.episode}</div>
+              {ep.dailyWinners?.length > 0 && <div style={{ fontSize: 12, color: "#aaa", marginBottom: 2 }}>Daily: {ep.dailyWinnerNames?.join(", ")}</div>}
+              {ep.elimWinners?.length > 0 && <div style={{ fontSize: 12, color: "#aaa", marginBottom: 2 }}>Elim Won: {ep.elimWinnerNames?.join(", ")}</div>}
+              {ep.elimLosers?.length > 0 && <div style={{ fontSize: 12, color: "#e50000", marginBottom: 4 }}>Eliminated: {ep.elimLoserNames?.join(", ")}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Delete button */}
+      <div style={{ margin: "12px 16px" }}>
+        {!showDeleteConfirm ? (
+          <button onClick={() => setShowDeleteConfirm(true)} style={{ ...S.btn("danger"), background: "#3a0a0a" }}>
+            Delete Season
+          </button>
+        ) : (
+          <div style={{ background: "#1a0000", border: "1px solid #e50000", borderRadius: 12, padding: 16 }}>
+            <div style={{ fontWeight: 700, color: "#e50000", marginBottom: 8, fontSize: 14 }}>Delete this season?</div>
+            <div style={{ fontSize: 13, color: "#aaa", marginBottom: 16 }}>This will permanently remove all results for {season.season_name}. This cannot be undone.</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => setShowDeleteConfirm(false)} style={{ ...S.btn("ghost"), flex: 1, marginTop: 0 }}>Cancel</button>
+              <button onClick={handleDelete} disabled={deleting} style={{ ...S.btn("danger"), flex: 1, marginTop: 0 }}>
+                {deleting ? "Deleting…" : "Yes, Delete"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main app ──────────────────────────────────────────────────────────────────
 export default function Challenge() {
   const [screen, setScreen] = useState("home");
@@ -872,6 +975,7 @@ export default function Challenge() {
   const [editEpisode, setEditEpisode] = useState(null);
   const [showBuyback, setShowBuyback] = useState(null);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const [viewingSeason, setViewingSeason] = useState(null); // saved season detail
 
   const [newPlayerName, setNewPlayerName] = useState("");
   const [setupTab, setSetupTab] = useState("players");
@@ -1149,16 +1253,24 @@ export default function Challenge() {
           {savedSeasons.length > 0 && (
             <div style={S.card}>
               <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8, color: "#e50000" }}>Completed Seasons</div>
-              {savedSeasons.map((s) => (
-                <div key={s.id} style={{
-                  display: "flex", justifyContent: "space-between", alignItems: "center",
-                  padding: "8px 0", borderBottom: "1px solid #2a0000",
-                }}>
+              {savedSeasons.map((s, i) => (
+                <div
+                  key={s.id}
+                  onClick={() => setViewingSeason(s)}
+                  style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "10px 0", borderBottom: i < savedSeasons.length - 1 ? "1px solid #2a0000" : "none",
+                    cursor: "pointer",
+                  }}
+                >
                   <div>
-                    <div style={{ fontSize: 14 }}>{s.season_name}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{s.season_name}</div>
                     <div style={{ fontSize: 11, color: "#888" }}>{s.season_year}</div>
                   </div>
-                  <span style={{ fontSize: 11, color: "#22c55e", fontWeight: 700 }}>✓ COMPLETED</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 11, color: "#22c55e", fontWeight: 700 }}>✓ COMPLETED</span>
+                    <span style={{ color: "#e50000", fontSize: 18, lineHeight: 1 }}>›</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1448,6 +1560,25 @@ export default function Challenge() {
             <button onClick={endSeason} style={S.btn("danger")}>Yes, End Season</button>
             <button onClick={() => setShowEndConfirm(false)} style={S.btn("ghost")}>Cancel</button>
           </div>
+        </div>
+      )}
+
+      {/* ── SAVED SEASON DETAIL (full-screen overlay) ── */}
+      {viewingSeason && (
+        <div style={{
+          position: "fixed", inset: 0, background: "#0d0d0d",
+          zIndex: 300, overflowY: "auto",
+          fontFamily: "'Helvetica Neue', Arial, sans-serif",
+          color: "#e2e8f0",
+        }}>
+          <SeasonDetailScreen
+            season={viewingSeason}
+            onBack={() => setViewingSeason(null)}
+            onDelete={async () => {
+              await loadAll();
+              setViewingSeason(null);
+            }}
+          />
         </div>
       )}
     </div>
