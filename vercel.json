@@ -1,5 +1,7 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/challenge",      "destination": "/challenge.html" },
+    { "source": "/challenge/(.*)", "destination": "/challenge.html" },
+    { "source": "/(.*)",           "destination": "/index.html" }
   ]
 }
